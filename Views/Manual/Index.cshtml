@@ -1,0 +1,43 @@
+﻿
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualización y Exportación de PDF</title>
+    <link rel="stylesheet" href="~/css/fontAwesome/css/all.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="icon" type="image/x-icon" href="~/ExcelecIcon.ico" />
+   
+</head>
+<body>
+
+    <div id="loadingOverlay" class="loader-overlay"></div>
+    <div id="loadingScreen" class="loader"></div>
+
+
+    <div class="container">
+        
+        <div class="content">
+            <h2 class="txt-forest-green text-center">Manual de Usuario</h2>
+            <iframe class="mg-top-50px" id="pdfViewer" src="~/files/Manual_de_Usuario_Tokenergy_EPM.pdf"></iframe>
+        </div>
+
+        
+       
+       
+    </div>
+
+   @*  <script src="~/js/fontawesome.js" asp-append-version="true"></script>
+    <script src="~/js/brands.js" asp-append-version="true"></script>
+    <script src="~/js/solid.js" asp-append-version="true"></script> *@
+
+    <script src="~/js/Views/Manual/Index.js" asp-append-version="true"></script>
+
+</body>
+</html>

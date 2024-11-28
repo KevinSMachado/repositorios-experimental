@@ -1,0 +1,352 @@
+﻿@using Newtonsoft.Json
+@using TK_ENERGY_GP_PORTAL.Models.DTO
+@{
+    ViewData["Title"] = "Tecnicos";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@{
+
+    var funcionarioLoggedIn = Context.Request.HttpContext.Session.GetString("funcionario");
+    var funcionario = JsonConvert.DeserializeObject<UserCredentialsDto>(funcionarioLoggedIn);
+
+    var tokensGenerados = new List<TokensSts> { };
+    if (TempData["tokensGenerados"] != null)
+    {
+        var tempdata = TempData["tokensGenerados"] as string;
+        tokensGenerados = JsonConvert.DeserializeObject<List<TokensSts>>(tempdata);
+    }
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tokens técnicos</title>
+    @* <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> *@
+    <link rel="stylesheet" href="~/css/fontAwesome/css/all.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="icon" type="image/x-icon" href="~/ExcelecIcon.ico" />
+</head>
+<body>
+    <div id="loadingOverlay" class="loader-overlay"></div>
+    <div id="loadingScreen" class="loader"></div>
+
+    <div class="container">
+
+        <div class="card rounded-0" style="box-shadow: 0 0 5px #456200;">
+
+            <div class="card-body" style="margin: 20px;">
+
+                <h2 class="txt-forest-green text-center">Tokens Técnicos</h2>
+
+
+                <form id="TecnicosForm" asp-controller="Token" asp-action="genTokenAdminTec" method="POST">
+
+
+                    <div class="row" style="margin-top: 50px;">
+
+                        <input type="hidden" id="tipoToken" name="tipoToken" value="">
+
+                        <input type="hidden" id="vista" name="vista" value="Tecnicos">
+
+
+                        <div class="col-12" style="margin-bottom: 20px;">
+
+                            <label for="MEDIDOR">
+                                <h5>Número de medidor (Serial) <span style="color: red">*</span> </h5>
+                            </label>
+                            <input type="text" class="form-control form-control-lg br-ip-lemon-green w-100" name="serial" autocomplete="Off" required pattern="^\d{11}$|^\d{13}$" id="MEDIDOR" placeholder="Ingresa el serial de tu medidor" />
+
+
+                        </div>
+
+
+
+                        <div class="col-12" style="margin-bottom: 70px;">
+
+                            <label for="MEDIDOR">
+                                <h5>Descripción de la solicitud</h5>
+                            </label>
+                            <textarea id="notas" required type="text" class="form-control form-control-lg br-ip-lemon-green" name="descripcion" placeholder="Ingrese la descripción aquí"></textarea>
+
+                        </div>
+
+                        @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearTokensDesbloqueo" && e.Estado == true)) != null)
+                        {
+                            <div class="col-lg-4 col-sm-12 col-md-12">
+
+                                <button type="submit" style="margin-bottom: 30px;" id="ClearTamperBoton" class="btn-lg btn btn-lemon-green w-100" onclick="setOperacionToken('Desbloqueo')">Desbloqueo</button>
+
+
+                            </div>
+                        }
+
+                      
+
+                        @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearTokensOpenRelay" && e.Estado == true)) != null)
+                        {
+                            <div class="col-lg-4 col-sm-12 col-md-12">
+
+                                <button type="submit" style="margin-bottom: 30px;" id="OpenRelayBoton" class="btn-lg btn btn-lemon-green w-100" onclick="setOperacionToken('OpenRelay')">Abrir Relay</button>
+
+
+
+                            </div>
+                        }
+
+                       
+
+                        @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearTokensCloseRelay" && e.Estado == true)) != null)
+                        {
+                            <div class="col-lg-4 col-sm-12 col-md-12">
+
+                                <button type="submit" style="margin-bottom: 30px;" id="CloseRelayBoton" class="btn-lg btn btn-lemon-green w-100" onclick="setOperacionToken('CloseRelay')">Cerrar Relay</button>
+
+
+                            </div>
+                        }
+
+                        
+
+
+                    </div>
+
+
+                </form>
+
+            </div>
+
+        </div>
+       
+
+        <div class="modal fade" id="modalTokens" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="ModalTokensLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+
+                        <h4 id="ModalTokensLabel" class="txt-forest-green modal-title fs-5">¡Felicidades, token(s) generado(s) con éxito!</h4>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+
+
+                    </div>
+                    <div class="modal-body">
+
+                        @if (tokensGenerados != null)
+                        {
+                            @for (int i = 0; i < tokensGenerados.Count; i++)
+                            {
+                                var token = tokensGenerados[i] as TokensSts;
+                                var tokenId = "token" + i;
+                                var alertToken = "alertToken" + i;
+
+                                string tokenConEspacios = "";
+
+                                for (int j = 0; j < token.token.Length; j++)
+                                {
+                                    if (j > 0 && j % 4 == 0)
+                                    {
+                                        tokenConEspacios += " "; // Agrega un espacio cada 4 caracteres
+                                    }
+                                    tokenConEspacios += token.token[j];
+                                }
+
+                                <div class="row">
+
+                                    <div class="col-12">
+
+                                        <div id="@alertToken" style="display: none; text-align: center; line-height: 35px; font-size: 20px;" class="mb10 alert alert-forest-green" role="alert">
+
+                                            ¡Token copiado con éxito!
+                                        </div>
+
+                                    </div>
+
+                                    <div class="col-lg-10 col-md-10 col-sm-12">
+                                        <label style="text-align: center; line-height: 35px; margin-bottom: 20px;" id="token" name="token" class="form-control br-ip-forest-green w-100 input-token">
+                                            <div id="@tokenId" style="display: inline-block; padding: 0px 5px 0px 5px;">@tokenConEspacios</div>
+                                        </label>
+                                    </div>
+                                    <div class="col-lg-2 col-md-2 col-sm-12">
+                                        <button type="button" onclick="copyToken('@token.token', '@alertToken')" class="btn btn-lemon-green btn-lg w-100">
+                                            <i class="fa-regular fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+
+                            }
+
+                        }
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-lemon-green" data-bs-dismiss="modal">Cerrar</button>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+   @*  <script src="~/js/fontawesome.js" asp-append-version="true"></script>
+    <script src="~/js/brands.js" asp-append-version="true"></script>
+    <script src="~/js/solid.js" asp-append-version="true"></script>
+ *@
+    <script>
+
+        document.querySelector("#sidebar").style.zIndex = "0";
+
+        window.onload = function () {
+            hideLoadingScreen();
+            checkResolution();
+            var activeElement = document.querySelector(".sidebar-item.active");
+
+            console.log(activeElement);
+
+            if (activeElement) {
+
+                activeElement.scrollIntoView();
+            }
+            mostrarModalSiHayTokens();
+        }
+        window.onresize = function () {
+
+            checkResolution();
+
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            // Inicializar el modal
+            var modal = new bootstrap.Modal(document.getElementById('modalTokens'));
+
+            // Otro código relacionado con el modal u otras funcionalidades
+        });
+
+        // Función para mostrar la pantalla de carga
+        function showLoadingScreen() {
+            document.getElementById("loadingOverlay").classList.remove("hide");
+            document.querySelector("#sidebar").style.zIndex = "0";
+            document.getElementById("loadingScreen").classList.remove("hide");
+        }
+
+        function hideLoadingScreen() {
+            document.getElementById("loadingOverlay").classList.add("hide");
+            document.getElementById("loadingScreen").classList.add("hide");
+            document.querySelector("#sidebar").style.zIndex = "1000";
+
+
+        }
+
+        function setOperacionToken(value) {
+            document.getElementById('tipoToken').value = value;
+        }
+
+        function mostrarModalSiHayTokens() {
+
+
+            var tokensGenerados = @Html.Raw(Json.Serialize(TempData["tokensGenerados"]));
+            var mensajeError = @Html.Raw(Json.Serialize(ViewData["MensajeError"]));
+
+
+            if (tokensGenerados != null) {
+                // Muestra el modal
+                var modal = new bootstrap.Modal(document.getElementById('modalTokens'));
+                modal.show();
+
+            } else {
+
+                if (mensajeError != null) {
+
+                    if (mensajeError != null) {
+                        errorAlert(mensajeError);
+
+                    }
+                }
+
+            }
+        }
+
+
+
+        function copyToken(token, alerta) {
+
+
+            console.log(alerta);
+            let text = token;
+
+            // Se añade el elemento text al portapapeles
+            navigator.clipboard.writeText(text.toString())
+
+                .then(() => {
+
+                    document.getElementById(alerta).style.display = "block";
+                    setTimeout(hideAlertToken.bind(null, alerta), 5000);
+
+
+                })
+                .catch(err => {
+                    console.error('Error al copiar al portapapeles:', err)
+                })
+
+        }
+
+        function hideAlertToken(alerta) {
+
+            document.getElementById(alerta).style.display = "none"
+        }
+
+        // Intercepta el formulario una vez se da click en el botón "submit"
+        document.getElementById("TecnicosForm").addEventListener("submit", function (event) {
+            event.preventDefault(); // Evitar el envío del formulario de forma predeterminada
+
+
+            showLoadingScreen();
+
+            // Simplemente envía el formulario
+            this.submit();
+        });
+
+
+        // Muestra la alerta de éxito con un texto asignado
+        function SuccessfulAlert(text) {
+            Swal.fire({
+                title: "Completado!",
+                text: text,  // Usar el parámetro 'text'
+                icon: "success",
+                'confirmButtonColor': "#84bd00"
+
+            });
+        }
+
+        // Muestra la alerta de éxito con un texto asignado y envia a una url asignada
+        function SuccessfulRedirectAlert(text, url) {
+            Swal.fire({
+                title: "Completado!",
+                text: text,  // Usar el parámetro 'text'
+                icon: "success",
+                'confirmButtonColor': "#84bd00"
+
+            }).then(function () {
+                showLoadingScreen();
+                window.location.href = url;  // Usar el parámetro 'url'
+            });
+        }
+
+        // Muestra la alerta de error con un texto asignado
+        function errorAlert(text) {
+
+            Swal.fire({
+                title: "Error!",
+                text: text,  // Usar el parámetro 'text'
+                icon: "error",
+                'confirmButtonColor': "#84bd00"
+
+            });
+        }
+    </script>
+
+</body>
+</html>
+

@@ -1,0 +1,123 @@
+﻿@using Newtonsoft.Json
+@using TK_ENERGY_GP_PORTAL.Models.DTO
+
+@{
+    ViewData["Title"] = "Informes";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+@{
+    var funcionarioLoggedIn = Context.Request.HttpContext.Session.GetString("funcionario");
+    var funcionario = JsonConvert.DeserializeObject<UserCredentialsDto>(funcionarioLoggedIn);
+}
+
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informes de funcionarios</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="icon" type="image/x-icon" href="~/ExcelecIcon.ico" />
+
+
+
+</head>
+
+
+<body>
+    <div id="loadingOverlay" class="loader-overlay"></div>
+    <div id="loadingScreen" class="loader"></div>
+
+    <div class="container">
+
+        <div class="card rounded-0" style="box-shadow: 0 0 5px #456200;">
+
+            <div class="card-body" style="margin: 20px;">
+
+                <h2 class="txt-forest-green text-center">Informes de funcionarios</h2>
+
+
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+
+    <script>
+
+
+
+        document.querySelector("#sidebar").style.zIndex = "0";
+
+        window.onload = function () {
+            hideLoadingScreen();
+
+        }
+
+
+        // Función para mostrar la pantalla de carga
+        function showLoadingScreen() {
+            document.getElementById("loadingOverlay").classList.remove("hide");
+            document.querySelector("#sidebar").style.zIndex = "0";
+            document.getElementById("loadingScreen").classList.remove("hide");
+        }
+
+        function hideLoadingScreen() {
+            document.getElementById("loadingOverlay").classList.add("hide");
+            document.getElementById("loadingScreen").classList.add("hide");
+            document.querySelector("#sidebar").style.zIndex = "1000";
+
+
+        }
+
+        // Muestra la alerta de éxito con un texto asignado
+        function SuccessfulAlert(text) {
+            Swal.fire(
+                'Completado!',
+                text,
+                'success',
+
+            );
+        }
+
+        // Muestra la alerta de éxito con un texto asignado y envia a una url asignada
+        function SuccessfulRedirectAlert(text, url) {
+            Swal.fire(
+                'Completado!',
+                text,
+                'success',
+
+
+            ).then(function () {
+                showLoadingScreen();
+                window.location.href = url;
+                setTimeout(hideLoadingScreen, 3000);
+
+            })
+        }
+
+        // Muestra la alerta de error con un texto asignado
+        function errorAlert(text) {
+            Swal.fire(
+                'Error!',
+                text,
+                'error',
+
+            );
+        }
+
+    </script>
+
+</body>
+
+
+</html>

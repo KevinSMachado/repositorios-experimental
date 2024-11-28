@@ -1,0 +1,1268 @@
+﻿@using Newtonsoft.Json
+@using TK_ENERGY_GP_PORTAL.Models.DTO
+
+@model TK_ENERGY_GP_PORTAL.Models.Utils.Medidor
+
+@{
+    ViewData["Title"] = "Gestionar";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    
+}
+
+@{
+    var funcionario = new UserCredentialsDto();
+    var funcionarioLoggedIn = Context.Request.HttpContext.Session.GetString("funcionario");
+
+    if(funcionarioLoggedIn != null){
+        funcionario = JsonConvert.DeserializeObject<UserCredentialsDto>(funcionarioLoggedIn);
+
+        TempData["funcionario"] = funcionario;
+
+    }
+
+    
+
+    var fabricantesModelos = new List<FabricantesRespDTO> { };
+
+    var servicios = new List<ServiciosRespDTO> { };
+
+    var medidores = new List<MedidorRespDTO> { };
+
+    if (TempData["fabricantesModelos"] != null)
+    {
+        fabricantesModelos = TempData["fabricantesModelos"] as List<FabricantesRespDTO>;
+        //fabricantesModelos = JsonConvert.DeserializeObject<List<FabricantesRespDTO>>(tempdata);
+    }
+
+    if (TempData["servicios"] != null)
+    {
+        servicios = TempData["servicios"] as List<ServiciosRespDTO>;
+    }
+
+    if (TempData["medidores"] != null)
+    {
+        medidores = TempData["medidores"] as List<MedidorRespDTO>;
+    }
+}
+
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestionar Medidores</title>
+   @*  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> *@
+    <link rel="stylesheet" href="~/css/fontAwesome/css/all.css" asp-append-version="true" />
+
+
+   @*  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"> *@
+    <link rel="stylesheet" href="~/css/bootstrap5.min.css" asp-append-version="true" />
+
+
+    @* <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css"> *@
+    <link rel="stylesheet" href="~/css/dataTables.bootstrap5.min.css" asp-append-version="true" />
+
+
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+
+   @*  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.dataTables.min.css"> *@
+    <link rel="stylesheet" href="~/css/responsive.dataTables.min.css" asp-append-version="true" />
+
+
+
+   @*  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.min.css"> *@
+    <link rel="stylesheet" href="~/css/chosen.min.css" asp-append-version="true" />
+
+
+
+
+
+</head>
+<body>
+
+    <div id="loadingOverlay" class="loader-overlay"></div>
+    <div id="loadingScreen" class="loader"></div>
+    <div class="container">
+
+        <div class="content">
+            <div class="card rounded-0 br-general-card">
+                <div class="card-body mg-20px" >
+                    <h2 class="text-center txt-forest-green">Gestión de Medidores</h2>
+
+
+                    <div class="row mg-top-50px">
+
+                        @if (funcionario.Funcionario.Permisos.Find(e => e.Nombre == "CrearMedidores" && e.Estado == true) != null)
+                        {
+                            <div class="col-lg-4 col-md-12 col-sm-12 mb-2">
+                                <button type="button" class="btn-lg btn btn-lemon-green w-100" onclick="abrirCrearMedidorModal()">Crear medidor <i class="fa-solid fa-plus"></i></button>
+                            </div>
+                        }
+
+                        <div class="col-lg-4 col-md-12 col-sm-12 mb-2">
+                            <button id="refrescarTabla" type="button" class="btn-lg btn btn-secondary w-100">Refrescar tabla <i class="fa-solid fa-rotate-right"></i></button>
+                        </div>
+
+                        @if (funcionario.Funcionario.Permisos.Find(e => e.Nombre == "VerInfoCompletaMedidores" && e.Estado == true) != null)
+                        {
+                            <div class="col-lg-4 col-md-12 col-sm-12 mb-2">
+                                <button type="button" onclick="verInfoCompletaMedidorModal()" class="btn-lg btn btn-lemon-green w-100">Ver información completa <i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>
+                            </div>
+                        }
+
+                        <div class="col-12  mb-2">
+                            <label for="filtro">
+                                <h5>Selecciona los filtros a usar </h5>
+                            </label>
+                            <select id="filtrosMedidores" class="chosen form-control br-ip-lemon-green" multiple>
+                                <option value="medidor" selected>Medidor</option>
+
+                            </select>
+                        </div>
+
+                        <form id="filtrosForm">
+                            <div class="row">
+
+                                <!-- Columna Serial -->
+                                <div id="filtroSerial" class="col-lg-6 col-md-12 mb-3">
+                                    <label for="serial">
+                                        <h5>Serial</h5>
+                                    </label>
+                                    <input id="serial" name="serial" type="number" required class="form-control form-control-lg br-ip-lemon-green w-100" placeholder="Ingresa el serial">
+                                </div>
+
+                                <!-- Columna Botón de búsqueda -->
+                                <div id="buscarPorFiltro" class="col-lg-6 col-md-12 mb-3">
+                                    <label id="labelBotonFiltro" for="botonfiltro">
+                                        <h5></h5>
+                                    </label>
+                                    <button type="submit" class="btn-lg btn btn-lemon-green w-100">Buscar <i class="fa-solid fa-filter"></i></button>
+                                </div>
+
+                                <div id="removerFiltros" class="col-lg-12 col-md-12 mb-3 display-none" >
+                                    <label id="labelRemoverFiltros" for="botonfiltro">
+                                        <h5></h5>
+                                    </label>
+                                    <button type="button" onclick="removerFiltros()" class="btn-lg btn btn-secondary w-100">Remover filtros <i class="fa-solid fa-filter-circle-xmark"></i></button>
+                                </div>
+
+                            </div>
+                        </form>
+
+
+                        <div class="col-12">
+
+                            <h5 class="display-none" id="filtrosUsados"></h5>
+
+                        </div>
+
+                        <div class="col-12 mb-5">
+                            <table id="tablaMedidores" class="table table-bordered dt-responsive nowrap w-100" cellspacing="0">
+                                <thead class="thead-tea-green">
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+
+
+                    <div class="row justify-content-center">
+
+                        @if (funcionario.Funcionario.Permisos.Find(e => e.Nombre == "ImportarMedidores" && e.Estado == true) != null)
+                        {
+                            <div class="col-lg-4 col-md-6 col-sm-12 mb-2 align-self-center">
+                                <button type="button" class="btn-lg btn btn-lemon-green w-100" onclick="ImportarMed()" id="importarMedidores">Importar medidores <i class="fa-solid fa-upload"></i></button>
+                            </div>
+                        }
+
+                        @if (funcionario.Funcionario.Permisos.Find(e => e.Nombre == "ExportarMedidores" && e.Estado == true) != null)
+                        {
+                            <div class="col-lg-4 col-md-6 col-sm-12 mb-2 align-self-center">
+                                <button type="button" class="btn-lg btn btn-lemon-green w-100">Exportar medidores <i class="fa-solid fa-download"></i></button>
+                            </div>
+                        }
+
+                    </div>
+                </div>
+            </div>
+        </div>
+       
+    </div>
+
+
+
+    <div class="modal fade" id="crearMedidorModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="crearMedidorModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content br-forest-green">
+                <div class="modal-header">
+                    <h4 class="modal-title txt-forest-green" id="crearMedidorModalLabel">Crear Medidor</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="medidorForm" asp-controller="Medidor" asp-action="crearMedidor" method="POST">
+                    <div class="modal-body">
+
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+
+                                <label for="Empresa">
+                                    <h5>Empresa <span class="color-red" >*</span> </h5>
+                                </label>
+
+                                <select class="form-select form-select-lg br-ip-lemon-green w-100" id="empresa" disabled aria-label="Seleccionar Empresa">
+                                    <option value=""></option>
+
+                                    <option selected value="0" >EPM</option>
+
+                                </select>
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Proyecto">
+                                    <h5>Proyecto <span class="color-red">*</span> </h5>
+                                </label>
+
+                                <select class="form-select form-select-lg br-ip-lemon-green w-100" id="proyecto" disabled aria-label="Seleccionar Proyecto">
+                                    <option value=""></option>
+
+                                    <option selected value="0" >EPM</option>
+
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Fabricante">
+                                    <h5>Fabricante <span class="color-red">*</span> </h5>
+                                </label>
+
+                                <select asp-for="fabricante" required class="form-select form-select-lg br-ip-lemon-green w-100" id="fabricante" aria-label="Seleccionar Fabricante">
+                                    <option value=""></option>
+
+                                    @foreach (var fabricante in fabricantesModelos)
+                                    {
+                                        @if(fabricante.modelos.Count > 0)
+                                        {
+                                            <option value="@fabricante.nombreFabricante">@fabricante.nombreFabricante</option>
+                                        }
+                                       
+                                    }
+                                    
+
+                                </select>
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Modelo">
+                                    <h5>Modelo <span class="color-red">*</span> </h5>
+                                </label>
+
+                                <select asp-for="modelo" required disabled class="form-select form-select-lg br-ip-lemon-green w-100"  id="modelo" aria-label="Seleccionar Modelo">
+                                    <option value="">Selecciona modelo</option>
+
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Servicio">
+                                    <h5>Servicio <span class="color-red">*</span> </h5>
+                                </label>
+
+                                <select asp-for="tipoServicio" class="form-select form-select-lg br-ip-lemon-green w-100" required id="servicio" aria-label="Seleccionar Servicio">
+                                    <option value="">Selecciona servicio</option>
+
+                                    @foreach(var servicio in servicios)
+                                    {
+                                        <option value="@servicio.codServicio">@servicio.descripcion</option>
+
+                                    }
+
+                                </select>
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+
+                                <label for="Medidor">
+                                    <h5>Número de medidor (Serial) <span class="color-red">*</span> </h5>
+                                </label>
+                                <input asp-for="serial" type="text" class="form-control form-control-lg br-ip-lemon-green w-100" autocomplete="Off" required pattern="^\d{11}$|^\d{13}$" id="MEDIDOR" placeholder="Ingresa el serial de tu medidor" />
+
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Modo">
+                                    <h5>Modo <span class="color-red">*</span> </h5>
+                                </label>
+
+                                <select asp-for="modo" class="form-select form-select-lg br-ip-lemon-green w-100" required id="modo" aria-label="Seleccionar Modo">
+                                    <option value=""></option>
+
+                                    <option value="0" >Pospago</option>
+                                    <option value="1" >Prepago</option>
+
+
+
+                                </select>
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Estado">
+                                    <h5>Estado <span class="color-red">*</span> </h5>
+                                </label>
+
+                                <select asp-for="estado" class="form-select form-select-lg br-ip-lemon-green w-100" required id="modo" aria-label="Seleccionar Estado">
+                                    <option value=""></option>
+
+                                    <option value="0" >Activo</option>
+                                    <option value="1" >En bodega</option>
+                                    <option value="11" >Bloqueado</option>
+                                    <option value="12" >Dado de baja por perdida total</option>
+                                    <option value="13" >Dado de baja por robo</option>
+
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="nis">
+                                    <h5>NIS</h5>
+                                </label>
+                                <input asp-for="nis" value="" type="text" class="form-control form-control-lg br-ip-lemon-green w-100" autocomplete="Off" id="nis" placeholder="Ingresa el NIS" />
+
+                                
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="nic">
+                                    <h5>NIC </h5>
+                                </label>
+                                <input asp-for="nic" value="" type="text" class="form-control form-control-lg br-ip-lemon-green w-100"  autocomplete="Off"  id="nic" placeholder="Ingresa el NIC" />
+
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+
+                                <label for="AñoBase">
+                                    <h5>AñoBase <span class="color-red" >*</span> </h5>
+                                </label>
+
+                                <select asp-for="anoBase" required class="form-select form-select-lg br-ip-lemon-green w-100" id="añobase" aria-label="Seleccionar AñoBase">
+
+                                    <option value=""></option>
+
+                                    <option value="1993">1993</option>
+                                    <option value="2014">2014</option>
+
+                                </select>
+
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+
+                                <label for="Fecha de fabricación">
+                                    <h5>Fecha de fabricación </h5>
+                                </label>
+
+                                <input asp-for="fechaFabricacion" value="" type="date" class="form-control form-control-lg br-ip-lemon-green w-100" id="fechaFabricacion">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+
+                                <label for="ReportaMovil">
+                                    <h5>Reporte a correo</h5>
+                                </label>
+
+                                <select asp-for="reportaEmail"  class="form-select form-select-lg br-ip-lemon-green w-100"  id="reportaEmail" aria-label="Seleccionar si reporta a correo">
+
+                                    <option value=""></option>
+
+                                    <option value="1">Si</option>
+                                    <option value="0">No</option>
+
+                                </select>
+
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+
+                                <label for="ReporteMovil">
+                                    <h5>Reporte a celular</h5>
+                                </label>
+
+                                <select asp-for="reportaMovil" class="form-select form-select-lg br-ip-lemon-green w-100" id="reportaMovil" aria-label="Seleccionar si reporta a celular">
+
+                                    <option value=""></option>
+
+                                    <option value="1">Si</option>
+                                    <option value="0">No</option>
+
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="nis">
+                                    <h5>Correo eléctronico</h5>
+                                </label>
+                                <input asp-for="email" value="" type="email" disabled class="form-control form-control-lg br-ip-lemon-green w-100"  autocomplete="Off" id="email" placeholder="Ingresa el correo" />
+
+
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Celular">
+                                    <h5>Celular </h5>
+                                </label> 
+                                <input asp-for="movil" value="" type="number" disabled class="form-control form-control-lg br-ip-lemon-green w-100" min="1000000000" max="9999999999" autocomplete="Off" id="movil" placeholder="Ingresa el celular" />
+
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="sgc">
+                                    <h5>SGC <span class="color-red" >*</span></h5>
+                                </label>
+
+                                <select asp-for="sgc" required class="form-select form-select-lg br-ip-lemon-green w-100" id="sgc" aria-label="Seleccionar SGC">
+
+                                    <option value=""></option>
+
+                                    <option value="600268">600268</option>
+
+
+                                </select>
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+
+                                <label for="ami">
+                                    <h5>AMI <span class="color-red" >*</span> </h5>
+                                </label>
+
+                                <select asp-for="ami" class="form-select form-select-lg br-ip-lemon-green w-100" required id="ami" aria-label="Seleccionar AMI">
+
+                                    <option value=""></option>
+
+                                    <option value="0">STS OFF-LINE</option>
+
+
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+
+                                <label for="tarifIndex">
+                                    <h5>TarifIndex (TI) <span class="color-red" >*</span> </h5>
+                                </label>
+                                <input asp-for="ti" type="number" class="form-control form-control-lg br-ip-lemon-green w-100" min="1" max="9" autocomplete="Off" required id="tarifIndex" placeholder="Ingresa el ti" />
+
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                
+                                <label for="krn">
+                                    <h5>Key Revision Number (KRN) <span class="color-red" >*</span> </h5>
+                                </label>
+                                <input asp-for="krn" type="number" class="form-control form-control-lg br-ip-lemon-green w-100" min="1" max="99" autocomplete="Off" required id="krn" placeholder="Ingresa el krn" />
+
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                              
+                                <label for="TidRollover">
+                                    <h5>TidRollover <span class="color-red" >*</span> </h5>
+                                </label>
+
+                                <select asp-for="tidRo" class="form-select form-select-lg br-ip-lemon-green w-100" required id="TidRollover" aria-label="Seleccionar Tid">
+
+                                    <option value=""></option>
+
+                                    <option value="0">Autorizado Automatico</option>
+                                    <option value="1">Autorizado manual (Sectorización)</option>
+                                    <option value="9">No se puede actualizar</option>
+
+
+
+
+
+                                </select>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-lg btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn-lg btn btn-lemon-green">Crear</button>
+                    </div>
+                </form>
+                
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editarMedidorModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="crearMedidorModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content br-forest-green">
+                <div class="modal-header">
+                    <h4 class="modal-title txt-forest-green" id="crearMedidorModalLabel">Editar Medidor</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+
+                <div class="pd-edit-modal">
+                    <div class="row">
+                        <div class="col-md-12 col-lg-6 col-sm-12">
+
+                            <label for="Empresa">
+                                <h5>Empresa <span class="color-red" >*</span> </h5>
+                            </label>
+
+                            <div class="input-group mb-3">
+                                <select disabled class="form-select form-select-lg br-ip-lemon-green " id="editarEmpresa" aria-label="Seleccionar Empresa">
+                                    <option value=""></option>
+
+                                    <option selected value="0">EPM</option>
+
+                                </select>
+
+                                <button disabled class="btn btn-lg btn-lemon-green" type="button" id="editarEmpresaBoton"><i class="fa-solid fa-pen"></i></button>
+
+                            </div>
+
+                        </div>
+                        <div class="col-md-12 col-lg-6 col-sm-12">
+                            <label for="Proyecto">
+                                <h5>Proyecto <span class="color-red" >*</span> </h5>
+                            </label>
+
+                            <div class="input-group mb-3">
+                                <select disabled class="form-select form-select-lg br-ip-lemon-green" id="editarProyecto" disabled aria-label="Seleccionar Proyecto">
+                                    <option value=""></option>
+
+                                    <option selected value="0">EPM</option>
+
+                                </select>
+
+                                <button disabled class="btn btn-lg btn-lemon-green" type="button" id="editarProyectoBoton"><i class="fa-solid fa-pen"></i></button>
+
+                            </div>
+
+
+                        </div>
+                    </div>
+
+                </div>
+                
+                <form id="editarMedidorForm" asp-controller="Medidor" asp-action="crearMedidor" method="POST">
+                    <div class="modal-body">
+
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Fabricante">
+                                    <h5>Fabricante <span class="color-red" >*</span> </h5>
+                                </label>
+
+
+
+                                <div class="input-group mb-3">
+
+                                    <select disabled asp-for="fabricante" class="form-select form-select-lg br-ip-lemon-green " id="editarFabricante" aria-label="Seleccionar Fabricante">
+                                       
+
+                                        @foreach (var fabricante in fabricantesModelos)
+                                        {
+                                            @if (fabricante.modelos.Count > 0)
+                                            {
+                                                <option value="@fabricante.nombreFabricante">@fabricante.nombreFabricante</option>
+                                            }
+
+                                        }
+
+
+                                    </select>
+
+                                    <button onclick="editarCampo('editarFabricante')"  class="btn btn-lg btn-lemon-green" type="button" id="editarFabricanteBoton"><i class="fa-solid fa-pen"></i></button>
+
+                                </div>
+
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Modelo">
+                                    <h5>Modelo <span class="color-red" >*</span> </h5>
+                                </label>
+
+
+                                <select asp-for="modelo" disabled class="form-select form-select-lg br-ip-lemon-green"  id="editarModelo" aria-label="Seleccionar Modelo">
+                                   
+                                </select>
+                                
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Servicio">
+                                    <h5>Servicio <span class="color-red" >*</span> </h5>
+                                </label>
+
+                                <div class="input-group mb-3">
+
+                                    <select disabled asp-for="tipoServicio" class="form-select form-select-lg br-ip-lemon-green" required id="editarServicio" aria-label="Seleccionar Servicio">
+                                       
+
+                                        @foreach (var servicio in servicios)
+                                        {
+                                            <option value="@servicio.codServicio">@servicio.descripcion</option>
+
+                                        }
+
+                                    </select>
+                                    <button onclick="editarCampo('editarServicio')" class="btn btn-lg btn-lemon-green" type="button" id="editarServicioBoton"><i class="fa-solid fa-pen"></i></button>
+
+                                </div>
+
+
+                                
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+
+                                <label for="Medidor">
+                                    <h5>Número de medidor (Serial) <span class="color-red" >*</span> </h5>
+                                </label>
+
+                                <input disabled asp-for="serial" type="text" class="form-control form-control-lg br-ip-lemon-green " autocomplete="Off" required pattern="^\d{11}$|^\d{13}$" id="editarMedidor" placeholder="Ingresa el serial de tu medidor" />
+
+                                
+
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Modo">
+                                    <h5>Modo <span class="color-red" >*</span> </h5>
+                                </label>
+
+                                <div class="input-group mb-3">
+
+                                    <select disabled asp-for="modo" class="form-select form-select-lg br-ip-lemon-green" required id="editarModo" aria-label="Seleccionar Modo">
+                                       
+
+                                        <option value="0">Pospago</option>
+                                        <option value="1">Prepago</option>
+
+
+
+                                    </select>
+                                    <button onclick="editarCampo('editarModo')" class="btn btn-lg btn-lemon-green" type="button" id="editarModoBoton"><i class="fa-solid fa-pen"></i></button>
+
+                                </div>
+
+                               
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Estado">
+                                    <h5>Estado <span class="color-red" >*</span> </h5>
+                                </label>
+
+                                <div class="input-group mb-3">
+
+                                    <select disabled asp-for="estado" class="form-select form-select-lg br-ip-lemon-green" required id="editarEstado" aria-label="Seleccionar Estado">
+                                       
+                                        <option value="0">Activo</option>
+                                        <option value="1">En bodega</option>
+                                        <option value="11">Bloqueado</option>
+                                        <option value="12">Dado de baja por perdida total</option>
+                                        <option value="13">Dado de baja por robo</option>
+
+                                    </select>
+                                    <button onclick="editarCampo('editarEstado')" class="btn btn-lg btn-lemon-green" type="button" id="editarEstadoBoton"><i class="fa-solid fa-pen"></i></button>
+                                </div>
+
+                                
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="nis">
+                                    <h5>NIS</h5>
+                                </label>
+
+                                <div class="input-group mb-3">
+
+                                    <input disabled asp-for="nis" value="" type="text" class="form-control form-control-lg br-ip-lemon-green" autocomplete="Off" id="editarNis" placeholder="Ingresa el NIS" />
+                                    <button onclick="editarCampo('editarNis')" class="btn btn-lg btn-lemon-green" type="button" id="editarNisBoton"><i class="fa-solid fa-pen"></i></button>
+
+                                </div>
+
+                                
+
+                                
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="nic">
+                                    <h5>NIC </h5>
+                                </label>
+
+                                <div class="input-group mb-3">
+
+                                    <input disabled asp-for="nic" value="" type="text" class="form-control form-control-lg br-ip-lemon-green" autocomplete="Off" id="editarNic" placeholder="Ingresa el NIC" />
+                                    <button onclick="editarCampo('editarNic')" class="btn btn-lg btn-lemon-green" type="button" id="editarNicBoton"><i class="fa-solid fa-pen"></i></button>
+
+                                </div>
+
+                                
+
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+
+                                <label for="AñoBase">
+                                    <h5>AñoBase <span class="color-red" >*</span> </h5>
+                                </label>
+
+
+                                @if (funcionario.Funcionario.Permisos.Find(e => e.Nombre == "EditarAnoBaseMedidores" && e.Estado == true) != null)
+                                {
+                                    <div class="input-group mb-3">
+
+                                        <select disabled asp-for="anoBase" required class="form-select form-select-lg br-ip-lemon-green" id="editarAñoBase" aria-label="Seleccionar AñoBase">
+
+
+
+                                            <option value="1993">1993</option>
+                                            <option value="2014">2014</option>
+
+                                        </select>
+                                        <button onclick="editarCampo('editarAñoBase')" class="btn btn-lg btn-lemon-green" type="button" id="editarAñoBaseBoton"><i class="fa-solid fa-pen"></i></button>
+
+                                    </div>
+
+                                }
+
+                                @if (funcionario.Funcionario.Permisos.Find(e => e.Nombre == "EditarAnoBaseMedidores" && e.Estado == true) == null)
+                                {
+                                    <select disabled asp-for="anoBase" required class="form-select form-select-lg br-ip-lemon-green" id="editarAñoBase" aria-label="Seleccionar AñoBase">
+
+
+
+                                        <option value="1993">1993</option>
+                                        <option value="2014">2014</option>
+
+                                    </select>
+                                }
+
+
+
+                               
+
+                                
+
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+
+                                <label for="Fecha de fabricación">
+                                    <h5>Fecha de fabricación </h5>
+                                </label>
+
+                                <div class="input-group mb-3">
+
+                                    <input disabled asp-for="fechaFabricacion" value="" type="date" class="form-control form-control-lg br-ip-lemon-green" id="editarFechaFabricacion">
+                                    <button onclick="editarCampo('editarFechaFabricacion')" class="btn btn-lg btn-lemon-green" type="button" id="editarFechaFabricacionBoton"><i class="fa-solid fa-pen"></i></button>
+
+                                </div>
+
+                                
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+
+                                <label for="ReportaMovil">
+                                    <h5>Reporte a correo</h5>
+                                </label>
+
+                                <div class="input-group mb-3">
+
+                                    <select disabled asp-for="reportaEmail" class="form-select form-select-lg br-ip-lemon-green" id="editarReportaEmail" aria-label="Seleccionar si reporta a correo">
+
+                                      
+
+                                        <option value="1">Si</option>
+                                        <option value="0">No</option>
+
+                                    </select>
+                                    <button onclick="editarCampo('editarReportaEmail')" class="btn btn-lg btn-lemon-green" type="button" id="editarReportaEmailBoton"><i class="fa-solid fa-pen"></i></button>
+
+                                </div>
+
+                               
+
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+
+                                <label for="ReporteMovil">
+                                    <h5>Reporte a celular</h5>
+                                </label>
+
+                                <div class="input-group mb-3">
+
+                                    <select disabled asp-for="reportaMovil" class="form-select form-select-lg br-ip-lemon-green" id="editarReportaMovil" aria-label="Seleccionar si reporta a celular">
+
+                                        
+
+                                        <option value="1">Si</option>
+                                        <option value="0">No</option>
+
+                                    </select>
+                                    <button onclick="editarCampo('editarReportaMovil')" class="btn btn-lg btn-lemon-green" type="button" id="editarReportaMovilBoton"><i class="fa-solid fa-pen"></i></button>
+
+                                </div>
+
+                               
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="nis">
+                                    <h5>Correo eléctronico</h5>
+                                </label>
+
+                                <input disabled asp-for="email" value="" type="email" disabled class="form-control form-control-lg br-ip-lemon-green" autocomplete="Off" id="editarEmail" placeholder="Ingresa el correo" />
+
+
+                                
+
+
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Celular">
+                                    <h5>Celular </h5>
+                                </label> 
+
+                                <input disabled asp-for="movil" value="" type="number" disabled class="form-control form-control-lg br-ip-lemon-green" min="1000000000" max="9999999999" autocomplete="Off" id="editarMovil" placeholder="Ingresa el celular" />
+                               
+
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="sgc">
+                                    <h5>SGC <span class="color-red" >*</span></h5>
+                                </label>
+
+                                <select disabled asp-for="sgc" required class="form-select form-select-lg br-ip-lemon-green" id="editarSgc" aria-label="Seleccionar SGC">
+
+
+
+                                    <option value="600268">600268</option>
+
+
+                                </select>
+
+                                
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+
+                                <label for="ami">
+                                    <h5>AMI <span class="color-red" >*</span> </h5>
+                                </label>
+
+                                <div class="input-group mb-3">
+
+                                    <select asp-for="ami" disabled class="form-select form-select-lg br-ip-lemon-green" required id="editarAmi" aria-label="Seleccionar AMI">
+
+                                       
+
+                                        <option value="0">STS OFF-LINE</option>
+
+
+                                    </select>
+                                    <button onclick="editarCampo('editarAmi')" class="btn btn-lg btn-lemon-green" type="button" id="editarAmiBoton"><i class="fa-solid fa-pen"></i></button>
+
+                                </div>
+
+                                
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+
+                                <label for="tarifIndex">
+                                    <h5>TarifIndex (TI) <span class="color-red" >*</span> </h5>
+                                </label>
+
+                                <input disabled asp-for="ti" type="number" class="form-control form-control-lg br-ip-lemon-green" min="1" max="9" autocomplete="Off" required id="editarTarifIndex" placeholder="Ingresa el ti" />
+
+                                
+
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                
+                                <label for="krn">
+                                    <h5>Key Revision Number (KRN) <span class="color-red" >*</span> </h5>
+                                </label>
+
+                                <div class="input-group mb-3">
+
+                                    <input disabled asp-for="krn" type="number" class="form-control form-control-lg br-ip-lemon-green" min="1" max="99" autocomplete="Off" required id="editarKrn" placeholder="Ingresa el krn" />
+                                    <button onclick="editarCampo('editarKrn')" class="btn btn-lg btn-lemon-green" type="button" id="editarKrnBoton"><i class="fa-solid fa-pen"></i></button>
+
+                                </div>
+
+                                
+
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                              
+                                <label for="TidRollover">
+                                    <h5>TidRollover <span class="color-red" >*</span> </h5>
+                                </label>
+
+                                <div class="input-group mb-3">
+
+                                    <select disabled asp-for="tidRo" class="form-select form-select-lg br-ip-lemon-green" required id="editarTidRollover" aria-label="Seleccionar Tid">
+
+                                       
+
+                                        <option value="0">Autorizado Automatico</option>
+                                        <option value="1">Autorizado manual (Sectorización)</option>
+                                        <option value="9">No se puede actualizar</option>
+
+
+
+
+
+                                    </select>
+                                    <button onclick="editarCampo('editarTidRollover')" class="btn btn-lg btn-lemon-green" type="button" id="editarTidRolloverBoton"><i class="fa-solid fa-pen"></i></button>
+
+                                </div>
+
+                                
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-lg btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn-lg btn btn-lemon-green">
+                            Editar
+                        </button>
+                    </div>
+                </form>
+                
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="verMasMedidorModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="crearMedidorModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content br-forest-green">
+                <div class="modal-header">
+                    <h4 class="modal-title txt-forest-green" id="crearMedidorModalLabel">Información completa del medidor</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="medidorForm" asp-controller="Medidor" asp-action="crearMedidor" method="POST">
+                    <div class="modal-body">
+
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Empresa">
+                                    <h5>Empresa <span class="color-red" >*</span> </h5>
+                                </label>
+                                <input disabled type="text" class="form-control form-control-lg br-ip-lemon-green" id="verMasEmpresa" value="EPM" aria-label="Seleccionar Empresa">
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Proyecto">
+                                    <h5>Proyecto <span class="color-red" >*</span> </h5>
+                                </label>
+                                <input disabled type="text" class="form-control form-control-lg br-ip-lemon-green" id="verMasProyecto" value="EPM" aria-label="Seleccionar Proyecto">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Fabricante">
+                                    <h5>Fabricante </h5>
+                                </label>
+                                <input disabled asp-for="fabricante" type="text" class="form-control form-control-lg br-ip-lemon-green" id="verMasFabricante" aria-label="Seleccionar Fabricante">
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Modelo">
+                                    <h5>Modelo </h5>
+                                </label>
+                                <input disabled asp-for="modelo" type="text" class="form-control form-control-lg br-ip-lemon-green" id="verMasModelo" aria-label="Seleccionar Modelo">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Servicio">
+                                    <h5>Servicio <span class="color-red" >*</span> </h5>
+                                </label>
+
+                                <select disabled asp-for="tipoServicio" class="form-select form-select-lg br-ip-lemon-green" required id="verMasServicio" aria-label="Seleccionar Servicio">
+                                    <option value="">Selecciona servicio</option>
+
+                                    @foreach (var servicio in servicios)
+                                    {
+                                        <option value="@servicio.codServicio">@servicio.descripcion</option>
+
+                                    }
+
+                                </select>
+
+                               
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Medidor">
+                                    <h5>Número de medidor (Serial) <span class="color-red" >*</span> </h5>
+                                </label>
+                                <input disabled asp-for="serial" type="text" class="form-control form-control-lg br-ip-lemon-green" autocomplete="Off" required pattern="^\d{11}$|^\d{13}$" id="verMasMedidor" placeholder="Ingresa el serial de tu medidor" />
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Modo">
+                                    <h5>Modo <span class="color-red" >*</span> </h5>
+                                </label>
+                                 <select disabled asp-for="modo" class="form-select form-select-lg br-ip-lemon-green" required id="verMasModo" aria-label="Seleccionar Modo">
+                                        <option value=""></option>
+
+                                        <option value="0">Pospago</option>
+                                        <option value="1">Prepago</option>
+
+
+
+                                    </select>
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Estado">
+                                    <h5>Estado <span class="color-red" >*</span> </h5>
+                                </label>
+                                <select disabled asp-for="estado" class="form-select form-select-lg br-ip-lemon-green" required id="verMasEstado" aria-label="Seleccionar Estado">
+                                        <option value=""></option>
+
+                                        <option value="0">Activo</option>
+                                        <option value="1">En bodega</option>
+                                        <option value="11">Bloqueado</option>
+                                        <option value="12">Dado de baja por perdida total</option>
+                                        <option value="13">Dado de baja por robo</option>
+
+                                    </select>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="nis">
+                                    <h5>NIS</h5>
+                                </label>
+                                <input disabled asp-for="nis" type="text" class="form-control form-control-lg br-ip-lemon-green" autocomplete="Off" id="verMasNis" placeholder="Ingresa el NIS" />
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="nic">
+                                    <h5>NIC </h5>
+                                </label>
+                                <input disabled asp-for="nic" type="text" class="form-control form-control-lg br-ip-lemon-green" autocomplete="Off" id="verMasNic" placeholder="Ingresa el NIC" />
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="AñoBase">
+                                    <h5>AñoBase <span class="color-red" >*</span> </h5>
+                                </label>
+                                <input disabled asp-for="anoBase" type="text" class="form-control form-control-lg br-ip-lemon-green" required id="verMasAñoBase" aria-label="Seleccionar AñoBase">
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Fecha de fabricación">
+                                    <h5>Fecha de fabricación </h5>
+                                </label>
+                                <input disabled asp-for="fechaFabricacion" type="date" class="form-control form-control-lg br-ip-lemon-green" id="verMasFechaFabricacion">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="ReportaMovil">
+                                    <h5>Reporte a correo</h5>
+                                </label>
+                               <select disabled asp-for="reportaEmail" class="form-select form-select-lg br-ip-lemon-green" id="verMasReportaEmail" aria-label="Seleccionar si reporta a correo">
+
+                                        <option value=""></option>
+
+                                        <option value="1">Si</option>
+                                        <option value="0">No</option>
+
+                                    </select>
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="ReporteMovil">
+                                    <h5>Reporte a celular</h5>
+                                </label>
+                                <select disabled asp-for="reportaMovil" class="form-select form-select-lg br-ip-lemon-green" id="verMasReportaMovil" aria-label="Seleccionar si reporta a celular">
+
+                                        <option value=""></option>
+
+                                        <option value="1">Si</option>
+                                        <option value="0">No</option>
+
+                                    </select>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="nis">
+                                    <h5>Correo eléctronico</h5>
+                                </label>
+                                <input disabled asp-for="email" type="email" class="form-control form-control-lg br-ip-lemon-green" autocomplete="Off" id="verMasEmail" placeholder="Ingresa el correo" />
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Celular">
+                                    <h5>Celular </h5>
+                                </label>
+                                <input disabled asp-for="movil" type="number" class="form-control form-control-lg br-ip-lemon-green" min="1000000000" max="9999999999" autocomplete="Off" id="verMasMovil" placeholder="Ingresa el celular" />
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="sgc">
+                                    <h5>SGC <span class="color-red" >*</span></h5>
+                                </label>
+                                <input disabled asp-for="sgc" type="text" class="form-control form-control-lg br-ip-lemon-green" required id="verMasSgc" aria-label="Seleccionar SGC">
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="ami">
+                                    <h5>AMI <span class="color-red" >*</span> </h5>
+                                </label>
+                                <select asp-for="ami" disabled class="form-select form-select-lg br-ip-lemon-green" required id="verMasAmi" aria-label="Seleccionar AMI">
+
+                                    <option value=""></option>
+
+                                    <option value="0">STS OFF-LINE</option>
+
+
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="tarifIndex">
+                                    <h5>TarifIndex (TI) <span class="color-red" >*</span> </h5>
+                                </label>
+                                <input disabled asp-for="ti" type="number" class="form-control form-control-lg br-ip-lemon-green" min="1" max="9" autocomplete="Off" required id="verMasTarifIndex" placeholder="Ingresa el ti" />
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="krn">
+                                    <h5>Key Revision Number (KRN) <span class="color-red" >*</span> </h5>
+                                </label>
+                                <input disabled asp-for="krn" type="number" class="form-control form-control-lg br-ip-lemon-green" min="1" max="99" autocomplete="Off" required id="verMasKrn" placeholder="Ingresa el krn" />
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="TidRollover">
+                                    <h5>TidRollover <span class="color-red" >*</span> </h5>
+                                </label>
+                                <select disabled asp-for="tidRo" class="form-select form-select-lg br-ip-lemon-green" required id="verMasTidRollover" aria-label="Seleccionar Tid">
+
+                                        <option value=""></option>
+
+                                        <option value="0">Autorizado Automatico</option>
+                                        <option value="1">Autorizado manual (Sectorización)</option>
+                                        <option value="9">No se puede actualizar</option>
+                                </select>
+
+
+
+
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-lg btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
+
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="verInfoCompletaMedidorModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="crearMedidorModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content br-forest-green">
+                <div class="modal-header">
+                    <h4 class="modal-title txt-forest-green" id="crearMedidorModalLabel">Información completa de los medidores</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="row justify-content-center">
+
+                        <div class="col-4">
+
+                        <button id="refrescarTablaCompleta" type="button" class="btn-lg btn btn-secondary w-100">Refrescar tabla <i class="fa-solid fa-rotate-right"></i></button>
+
+                        </div>
+
+                    </div>
+                    <table id="tablaMedidoresCompleto" class="table table-bordered dt-responsive nowrap w-100" cellspacing="0">
+                        <thead class="thead-tea-green">
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+                
+               
+
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+      @*  <script src="~/js/fontawesome.js" asp-append-version="true"></script>
+      <script src="~/js/brands.js" asp-append-version="true"></script>
+       <script src="~/js/solid.js" asp-append-version="true"></script>
+ *@
+   @*  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> *@
+     <script src="~/js/jquery-3.6.0.min.js" asp-append-version="true"></script>
+
+    @* <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script> *@
+     <script src="~/js/jquery.dataTables.min.js" asp-append-version="true"></script>
+
+    @* <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script> *@
+     <script src="~/js/dataTables.bootstrap5.min.js" asp-append-version="true"></script>
+
+    <!-- Responsive Extension JS -->
+    
+    @* <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script> *@
+     <script src="~/js/dataTables.responsive.min.js" asp-append-version="true"></script>
+    
+    @* <script src="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.jquery.min.js"></script> *@
+     <script src="~/js/chosen.jquery.min.js" asp-append-version="true"></script>
+
+    <script src="~/js/Views/Medidor/Gestionar.js" asp-append-version="true"></script>
+
+
+       
+
+    
+
+
+
+   <script>
+        var funcionario = @Html.Raw(Json.Serialize(TempData["funcionario"]));
+        var fabricantesModelosLista = @Html.Raw(Json.Serialize(TempData["fabricantesModelos"]));
+        var mensajeError = @Html.Raw(Json.Serialize(ViewData["MensajeError"]));
+   </script>
+</body>
+</html>

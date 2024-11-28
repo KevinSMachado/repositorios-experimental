@@ -1,0 +1,1129 @@
+﻿@using Microsoft.AspNetCore.Http
+@using Newtonsoft.Json
+@using TK_ENERGY_GP_PORTAL.Models.DTO
+
+@{
+    var funcionarioLoggedIn = Context.Request.HttpContext.Session.GetString("funcionario");
+    var funcionario = JsonConvert.DeserializeObject<UserCredentialsDto>(funcionarioLoggedIn);
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - TK_ENERGY_GP_PORTAL</title>
+
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="icon" type="image/x-icon" href="~/ExcelecIcon.ico" />
+
+    
+    <link rel="stylesheet" href="~/css/fontAwesome/css/all.css" asp-append-version="true" />
+
+    @* <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"> *@
+     <link rel="stylesheet" href="~/css/bootstrap5.min.css" asp-append-version="true" />
+    
+
+    @* <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet" /> *@
+    <link rel="stylesheet" href="~/css/fontawesome.css" asp-append-version="true" />
+
+
+</head>
+<body>
+
+    
+
+
+    <div class="wrapper">
+
+        <div >
+            <aside id="sidebar" @* class="expand" *@ aria-label="Barra lateral de navegación">
+
+
+                <div class="text-center mg-top-10px mg-bn-20px">
+
+                    <button type="button" class="home-btn">
+                        <img id="img-logo" class="img-logo-layout" src="~/img/TokEnergyPWExcEPM.png" alt="Logo TKGPWEB" />
+
+                    </button>
+
+
+                </div>
+
+                <div class="d-flex">
+                    <button class="toggle-btn" type="button" aria-label="Alternar barra lateral">
+                        <img class="rounded-circle" src="~/img/IconoExc.png" alt="Icon TKGPWEB" />
+
+                    </button>
+                    <div class="sidebar-logo">
+                        <span class="color-dark-green" >Usuario: @funcionario.Funcionario.Nombre</span>
+                        <br />
+                        <span class="color-dark-green" >Rol: @funcionario.Funcionario.rolFuncionario.Nombre</span>
+                    </div>
+                </div>
+
+                
+                <ul class="sidebar-nav" role="menubar">
+
+                    @if (funcionario.Funcionario.Permisos.Find(e => e.Nombre == "VerEnMenuPerfil" && e.Estado == true) != null)
+                    {
+
+                        @if (funcionario.Funcionario.Permisos.Find(e =>  (e.Nombre == "ConsultarPerfil" && e.Estado == true)
+                        || (e.Nombre == "EditarPerfil" && e.Estado == true) || (e.Nombre == "EliminarEmpresas" && e.Estado == true) || (e.Nombre == "EliminarPerfil" && e.Estado == true)) != null)
+                        {
+                            <li class="sidebar-item @(ViewBag.ActiveMenu == "perfil" ? "active" : "")" role="none">
+
+
+
+                                <a asp-controller="Perfil" asp-action="Index" class="sidebar-link" aria-label="Perfil" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-custom-class="custom-tooltip" data-bs-title="Perfil" title="Perfil">
+                                    <div>
+                                        <i class="fa-solid fa-user-gear"></i>
+                                        <span>Perfil</span>
+                                    </div>
+
+                                </a>
+
+
+
+                            </li>
+
+                        }
+                    }
+
+                    @if (funcionario.Funcionario.Permisos.Find(e => e.Nombre == "VerEnMenuTransacciones" && e.Estado == true) != null)
+                    {
+                        <li class="sidebar-item">
+                            <a class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse"
+                               data-bs-target="#transacciones" aria-expanded="@(ViewBag.DropdownActive == "transacciones" ? "true" : "false")" data-bs-title="Transacciones" data-bs-placement="right" title="Transacciones">
+                                <i class="fa-solid fa-bolt"></i>
+                                <span>Transacciones</span>
+                            </a>
+
+                             @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "ConsultarTransacciones" && e.Estado == true)
+                        || (e.Nombre == "InformesTransacciones" && e.Estado == true)) != null)
+                            {
+                                <ul id="transacciones" class="sidebar-dropdown list-unstyled collapse @(ViewBag.DropdownActive == "transacciones" ? "show" : "")">
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "ConsultarTransacciones" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "consultasTransacciones" ? "active" : "")">
+                                            <a asp-controller="Transaccion" asp-action="Consultas" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Consultas de transacciones">
+                                                <i class="fa-solid fa-magnifying-glass"></i>
+                                                <span>Consultas</span>
+                                            </a>
+                                        </li>
+
+                                    }
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "InformesTransacciones" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "informesTransacciones" ? "active" : "")">
+                                            <a asp-controller="Transaccion" asp-action="Informes" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Informes de transacciones">
+                                                <i class="fa-solid fa-chart-pie"></i>
+                                                <span>Informes</span>
+                                            </a>
+                                        </li>
+
+                                    }
+                                </ul>
+
+                            }
+                        </li>
+
+                    }
+
+                    @if (funcionario.Funcionario.Permisos.Find(e => e.Nombre == "VerEnMenuEmpresas" && e.Estado == true) != null)
+                    {
+                        <li class="sidebar-item">
+                            <a class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse" data-bs-placement="right" data-bs-custom-class="custom-tooltip" data-bs-title="Empresas" title="Empresas"
+                               data-bs-target="#empresas" aria-expanded="@(ViewBag.DropdownActive == "empresas" ? "true" : "false")" aria-controls="empresas">
+                                <i class="fa-solid fa-building"></i>
+                                <span>Empresas</span>
+                            </a>
+
+                             @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearEmpresas" && e.Estado == true) || (e.Nombre == "ConsultarEmpresas" && e.Estado == true)
+                        || (e.Nombre == "EditarEmpresas" && e.Estado == true) || (e.Nombre == "EliminarEmpresas" && e.Estado == true) || (e.Nombre == "InformesEmpresas" && e.Estado == true)) != null)
+                            {
+                                <ul id="empresas" class="sidebar-dropdown list-unstyled @(ViewBag.DropdownActive == "empresas" ? "show" : "") collapse" data-bs-parent="#sidebar">
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearEmpresas" && e.Estado == true) 
+                                    || (e.Nombre == "EditarEmpresas" && e.Estado == true) || (e.Nombre == "EliminarEmpresas" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "gestionarEmpresas" ? "active" : "")">
+                                            <a asp-controller="Empresa" asp-action="Gestionar" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Gestión de empresas">
+                                                <i class="fa-solid fa-folder-tree"></i>
+                                                <span>Gestionar</span>
+                                            </a>
+                                        </li>
+
+                                    }
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "ConsultarEmpresas" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "consultasEmpresas" ? "active" : "")">
+                                            <a asp-controller="Empresa" asp-action="Consultas" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Consultas de empresas">
+                                                <i class="fa-solid fa-magnifying-glass"></i>
+                                                <span>Consultas</span>
+                                            </a>
+                                        </li>
+
+                                    }
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "InformesEmpresas" && e.Estado == true)) != null){
+
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "informesEmpresas" ? "active" : "")">
+                                            <a asp-controller="Empresa" asp-action="Informes" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Informes de empresas">
+                                                <i class="fa-solid fa-chart-pie"></i>
+                                                <span>Informes</span>
+                                            </a>
+                                        </li>
+
+                                    }
+
+                                </ul>
+
+                            }
+
+                        </li>
+
+                    }
+
+                    @if (funcionario.Funcionario.Permisos.Find(e => e.Nombre == "VerEnMenuProyectos" && e.Estado == true) != null)
+                    {
+                        <li class="sidebar-item">
+
+                            <a class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse" data-bs-placement="right" title="Proyectos"
+                               data-bs-target="#proyectos" aria-expanded="@(ViewBag.DropdownActive == "proyectos" ? "true" : "false")" aria-controls="proyectos">
+                                <i class="fa-solid fa-diagram-project"></i>
+                                <span>Proyectos</span>
+                            </a>
+
+                            @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearProyectos" && e.Estado == true) || (e.Nombre == "ConsultarProyectos" && e.Estado == true)
+                          || (e.Nombre == "EditarProyectos" && e.Estado == true) || (e.Nombre == "EliminarProyectos" && e.Estado == true) || (e.Nombre == "InformesProyectos" && e.Estado == true)) != null)
+                            {
+                                <ul id="proyectos" class="sidebar-dropdown @(ViewBag.DropdownActive == "proyectos" ? "show" : "") list-unstyled collapse" data-bs-parent="#sidebar">
+
+                                     @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearProyectos" && e.Estado == true) 
+                                    || (e.Nombre == "EditarProyectos" && e.Estado == true) || (e.Nombre == "EliminarProyectos" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "gestionarProyectos" ? "active" : "")">
+                                            <a asp-controller="Proyecto" asp-action="Gestionar" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Gestión de proyectos">
+                                                <i class="fa-solid fa-folder-tree"></i>
+                                                <span>Gestionar</span>
+                                            </a>
+                                        </li>
+
+                                    }
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "ConsultarProyectos" && e.Estado == true)) != null)
+                                    {
+                                    <li class="sidebar-item @(ViewBag.ActiveMenu == "consultasProyectos" ? "active" : "")">
+                                        <a asp-controller="Proyecto" asp-action="Consultas" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Consultas de proyectos">
+                                            <i class="fa-solid fa-magnifying-glass"></i>
+                                            <span>Consultas</span>
+                                        </a>
+                                    </li>
+
+                                    }
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "InformesProyectos" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "informesProyectos" ? "active" : "")">
+                                            <a asp-controller="Proyecto" asp-action="Informes" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Informes de proyectos">
+                                                <i class="fa-solid fa-chart-pie"></i>
+                                                <span>Informes</span>
+                                            </a>
+                                        </li>
+
+                                    }
+
+                                </ul>
+
+                            }
+                        </li>
+
+                    }
+
+                    @if (funcionario.Funcionario.Permisos.Find(e => e.Nombre == "VerEnMenuMedidores" && e.Estado == true) != null)
+                    {
+                        <li class="sidebar-item">
+
+                            <a class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse" data-bs-placement="right" title="Medidores"
+                               data-bs-target="#medidores" aria-expanded="@(ViewBag.DropdownActive == "medidores" ? "true" : "false")" aria-controls="medidores">
+                                <i class="fa-solid fa-house-signal"></i>
+                                <span>Medidores</span>
+                            </a>
+
+                            @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearMedidores" && e.Estado == true) || (e.Nombre == "ConsultarMedidores" && e.Estado == true)
+                          || (e.Nombre == "EditarMedidores" && e.Estado == true) || (e.Nombre == "InformesMedidores" && e.Estado == true)) != null)
+                            {
+
+                                <ul id="medidores" class="sidebar-dropdown @(ViewBag.DropdownActive == "medidores" ? "show" : "") list-unstyled collapse" data-bs-parent="#sidebar">
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearMedidores" && e.Estado == true)
+                                   || (e.Nombre == "EditarMedidores" && e.Estado == true) || (e.Nombre == "ConsultarMedidores" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "gestionarMedidores" ? "active" : "")">
+                                            <a asp-controller="Medidor" asp-action="Gestionar" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Gestión de medidores">
+                                                <i class="fa-solid fa-folder-tree"></i>
+                                                <span>Gestionar</span>
+                                            </a>
+                                        </li>
+
+                                    }
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "ConsultarMedidores" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "consultasMedidores" ? "active" : "")">
+                                        <a asp-controller="Medidor" asp-action="Consultas" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Consultas de medidores">
+                                            <i class="fa-solid fa-magnifying-glass"></i>
+                                            <span>Consultas</span>
+                                        </a>
+                                        </li>
+                                        
+                                    }
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "InformesMedidores" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "informesMedidores" ? "active" : "")">
+                                            <a asp-controller="Medidor" asp-action="Informes" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Informes de medidores">
+                                                <i class="fa-solid fa-chart-pie"></i>
+                                                <span>Informes</span>
+                                            </a>
+                                        </li>
+
+                                    }
+
+                                </ul>
+
+                            }
+                        </li>
+
+                    }
+
+                    @if (funcionario.Funcionario.Permisos.Find(e => e.Nombre == "VerEnMenuInstalaciones" && e.Estado == true) != null)
+                    {
+                        <li class="sidebar-item">
+
+                            <a  class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse" data-bs-placement="right" title="Instalaciones"
+                               data-bs-target="#instalaciones" aria-expanded="@(ViewBag.DropdownActive == "instalaciones" ? "true" : "false")" aria-controls="instalaciones">
+                                <i class="fa-solid fa-tent-arrows-down"></i>
+                                <span>Instalaciones</span>
+                            </a>
+
+                             @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearInstalaciones" && e.Estado == true) || (e.Nombre == "ConsultarInstalaciones" && e.Estado == true)
+                           || (e.Nombre == "EditarInstalaciones" && e.Estado == true) || (e.Nombre == "EliminarInstalaciones" && e.Estado == true) || (e.Nombre == "InformesInstalaciones" && e.Estado == true)) != null)
+                           {
+                                <ul id="instalaciones" class="sidebar-dropdown @(ViewBag.DropdownActive == "instalaciones" ? "show" : "") list-unstyled collapse" data-bs-parent="#sidebar">
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearInstalaciones" && e.Estado == true)
+                                  || (e.Nombre == "EditarInstalaciones" && e.Estado == true) || (e.Nombre == "EliminarInstalaciones" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "gestionarInstalaciones" ? "active" : "")">
+                                            <a asp-controller="Instalacion" asp-action="Gestionar" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Gestión de instalaciones">
+                                                <i class="fa-solid fa-folder-tree"></i>
+                                                <span>Gestionar</span>
+                                            </a>
+                                        </li>
+
+                                    }
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "ConsultarInstalaciones" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "consultasInstalaciones" ? "active" : "")">
+                                            <a asp-controller="Instalacion" asp-action="Consultas" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Consultas de instalaciones">
+                                                <i class="fa-solid fa-magnifying-glass"></i>
+                                                <span>Consultas</span>
+                                            </a>
+                                        </li>
+
+                                    }
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "InformesInstalaciones" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "informesInstalaciones" ? "active" : "")">
+                                            <a asp-controller="Instalacion" asp-action="Informes" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Informes de instalaciones">
+                                                <i class="fa-solid fa-chart-pie"></i>
+                                                <span>Informes</span>
+                                            </a>
+                                        </li>
+
+                                    }
+
+                                </ul>
+
+                           }
+                        </li>
+
+                    }
+
+                    @if (funcionario.Funcionario.Permisos.Find(e => e.Nombre == "VerEnMenuFuncionarios" && e.Estado == true) != null)
+                    {
+                        <li class="sidebar-item">
+
+                            <a  class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse" data-bs-placement="right" title="Funcionarios"
+                               data-bs-target="#funcionarios" aria-expanded="@(ViewBag.DropdownActive == "funcionarios" ? "true" : "false")" aria-controls="funcionarios">
+                                <i class="fa-solid fa-users"></i>
+                                <span>Funcionarios</span>
+                            </a>
+
+                             @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearFuncionarios" && e.Estado == true) || (e.Nombre == "ConsultarFuncionarios" && e.Estado == true)
+                           || (e.Nombre == "EditarFuncionarios" && e.Estado == true) || (e.Nombre == "EliminarFuncionarios" && e.Estado == true) || (e.Nombre == "InformesFuncionarios" && e.Estado == true)) != null)
+                            {
+
+                                <ul id="funcionarios" class="sidebar-dropdown @(ViewBag.DropdownActive == "funcionarios" ? "show" : "") list-unstyled collapse" data-bs-parent="#sidebar">
+
+                                     @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearFuncionarios" && e.Estado == true)
+                                    || (e.Nombre == "EditarFuncionarios" && e.Estado == true) || (e.Nombre == "EliminarFuncionarios" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "gestionarFuncionarios" ? "active" : "")">
+                                            <a asp-controller="Funcionario" asp-action="Gestionar" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Gestión de funcionarios">
+                                                <i class="fa-solid fa-users-gear"></i>
+                                                <span>Gestionar</span>
+                                            </a>
+                                        </li>
+
+                                    }
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "ConsultarFuncionarios" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "consultasFuncionarios" ? "active" : "")">
+                                            <a asp-controller="Funcionario" asp-action="Consultas" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Consultas de funcionarios">
+                                                <i class="fa-solid fa-magnifying-glass"></i>
+                                                <span>Consultas</span>
+                                            </a>
+                                        </li>
+
+                                    }
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "InformesFuncionarios" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "informesFuncionarios" ? "active" : "")">
+                                            <a asp-controller="Funcionario" asp-action="Informes" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Informes de funcionarios">
+                                                <i class="fa-solid fa-chart-pie"></i>
+                                                <span>Informes</span>
+                                            </a>
+                                        </li>
+
+                                    }
+                                </ul>
+
+
+                            }
+
+                        </li>
+
+                    }
+
+                    @if (funcionario.Funcionario.Permisos.Find(e => e.Nombre == "VerEnMenuRoles" && e.Estado == true) != null)
+                    {
+                        <li class="sidebar-item">
+
+                            <a  class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse" data-bs-placement="right" title="Roles"
+                               data-bs-target="#roles" aria-expanded="@(ViewBag.DropdownActive == "roles" ? "true" : "false")" aria-controls="roles">
+                                <i class="fa-solid fa-lock"></i>
+                                <span>Roles</span>
+                            </a>
+
+                            @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearRoles" && e.Estado == true) || (e.Nombre == "ConsultarRoles" && e.Estado == true)
+                           || (e.Nombre == "EditarRoles" && e.Estado == true) || (e.Nombre == "EliminarRoles" && e.Estado == true) || (e.Nombre == "InformesRoles" && e.Estado == true)) != null)
+                            {
+                                <ul id="roles" class="sidebar-dropdown list-unstyled @(ViewBag.DropdownActive == "roles" ? "show" : "") collapse" data-bs-parent="#sidebar">
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearRoles" && e.Estado == true)
+                                   || (e.Nombre == "EditarRoles" && e.Estado == true) || (e.Nombre == "EliminarRoles" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "gestionarRoles" ? "active" : "")">
+                                            <a asp-controller="Rol" asp-action="Gestionar" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Gestión de roles">
+                                                <i class="fa-solid fa-folder-tree"></i>
+                                                <span>Gestionar</span>
+                                            </a>
+                                        </li>
+
+                                    }
+
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "ConsultarRoles" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "consultasRoles" ? "active" : "")">
+                                            <a asp-controller="Rol" asp-action="Consultas" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Consultas de roles">
+                                                <i class="fa-solid fa-magnifying-glass"></i>
+                                                <span>Consultas</span>
+                                            </a>
+                                        </li>
+
+                                    }
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "InformesRoles" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "informesRoles" ? "active" : "")">
+                                            <a asp-controller="Rol" asp-action="Informes" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Informes de roles">
+                                                <i class="fa-solid fa-chart-pie"></i>
+                                                <span>Informes</span>
+                                            </a>
+                                        </li>
+
+                                    }
+
+
+                                </ul>
+
+                            }
+                        </li>
+
+                    }
+
+                    @if (funcionario.Funcionario.Permisos.Find(e => e.Nombre == "VerEnMenuServicios" && e.Estado == true) != null)
+                    {
+                        <li class="sidebar-item">
+                            <a class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse" data-bs-placement="right" title="Servicios"
+                               data-bs-target="#servicios" aria-expanded="@(ViewBag.DropdownActive == "servicios" ? "true" : "false")" aria-controls="servicios">
+                                <i class="fa-brands fa-pagelines"></i>
+                                <span>Servicios</span>
+                            </a>
+
+                            @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearServicios" && e.Estado == true) || (e.Nombre == "ConsultarServicios" && e.Estado == true)
+                           || (e.Nombre == "EditarServicios" && e.Estado == true) || (e.Nombre == "EliminarServicios" && e.Estado == true) || (e.Nombre == "InformesServicios" && e.Estado == true)) != null)
+                            {
+                                <ul id="servicios" class="sidebar-dropdown @(ViewBag.DropdownActive == "servicios" ? "show" : "") list-unstyled collapse" data-bs-parent="#sidebar">
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearServicios" && e.Estado == true) 
+                                   || (e.Nombre == "EditarServicios" && e.Estado == true) || (e.Nombre == "EliminarServicios" && e.Estado == true))  != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "gestionarServicios" ? "active" : "")">
+                                            <a asp-controller="Servicio" asp-action="Gestionar" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Gestión de servicios">
+                                                <i class="fa-solid fa-folder-tree"></i>
+                                                <span>Gestionar</span>
+                                            </a>
+                                        </li>
+
+                                    }
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "ConsultarServicios" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "consultasServicios" ? "active" : "")">
+                                            <a asp-controller="Servicio" asp-action="Consultas" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Consultas de servicios">
+                                                <i class="fa-solid fa-magnifying-glass"></i>
+                                                <span>Consultas</span>
+                                            </a>
+                                        </li>
+
+                                    }
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "InformesServicios" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "informesServicios" ? "active" : "")">
+                                            <a asp-controller="Servicio" asp-action="Informes" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Informes de servicios">
+                                                <i class="fa-solid fa-chart-pie"></i>
+                                                <span>Informes</span>
+                                            </a>
+                                        </li>
+
+                                    }
+
+
+
+                                </ul>
+
+                            }
+                        </li>
+
+                    }
+
+                    @if (funcionario.Funcionario.Permisos.Find(e => e.Nombre == "VerEnMenuPermisos" && e.Estado == true) != null)
+                    {
+
+                        if (funcionario.Funcionario.Permisos.Find(e => e.Nombre == "ConsultarPermisos" && e.Estado == true) != null)
+                        {
+                            <li class="sidebar-item @(ViewBag.ActiveMenu == "permisos" ? "active" : "")" data-bs-toggle="tooltip" data-bs-placement="right" title="Permisos">
+                                <a asp-controller="Permiso" asp-action="Index" class="sidebar-link">
+                                    <i class="fa-solid fa-user-check"></i>
+                                    <span>Permisos</span>
+                                </a>
+                            </li>
+
+                        }
+
+                    }
+
+                    @if (funcionario.Funcionario.Permisos.Find(e => e.Nombre == "VerEnMenuFabricantes" && e.Estado == true) != null)
+                    {
+                        <li class="sidebar-item">
+                            <a  class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse" data-bs-placement="right" title="Fabricantes"
+                            data-bs-target="#fabricantes" aria-expanded="@(ViewBag.DropdownActive == "fabricantes" ? "true" : "false")" aria-controls="fabricantes">
+                                <i class="fa-solid fa-hammer"></i>
+                                <span>Fabricantes</span>
+                            </a>
+
+                            @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearFabricantes" && e.Estado == true) || (e.Nombre == "ConsultarFabricantes" && e.Estado == true)
+                           || (e.Nombre == "EditarFabricantes" && e.Estado == true) || (e.Nombre == "EliminarFabricantes" && e.Estado == true) || (e.Nombre == "InformesFabricantes" && e.Estado == true)) != null)
+                            {
+
+                                <ul id="fabricantes" class="sidebar-dropdown @(ViewBag.DropdownActive == "fabricantes" ? "show" : "") list-unstyled collapse" data-bs-parent="#sidebar">
+
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearFabricantes" && e.Estado == true) 
+                                   || (e.Nombre == "EditarFabricantes" && e.Estado == true) || (e.Nombre == "EliminarFabricantes" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "gestionarFabricantes" ? "active" : "")">
+                                            <a asp-controller="Fabricante" asp-action="Gestionar" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Gestión de fabricantes">
+                                                <i class="fa-solid fa-folder-tree"></i>
+                                                <span>Gestionar</span>
+                                            </a>
+                                        </li>
+
+                                    }
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "ConsultarFabricantes" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "consultasFabricantes" ? "active" : "")">
+                                            <a asp-controller="Fabricante" asp-action="Consultas" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Consultas de transacciones">
+                                                <i class="fa-solid fa-magnifying-glass"></i>
+                                                <span>Consultas</span>
+                                            </a>
+                                        </li>
+
+                                    }
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "InformesFabricantes" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "informesFabricantes" ? "active" : "")">
+                                            <a asp-controller="Fabricante" asp-action="Informes" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Informes de transacciones">
+                                                <i class="fa-solid fa-chart-pie"></i>
+                                                <span>Informes</span>
+                                            </a>
+                                        </li>
+
+                                    }
+
+                                </ul>
+
+                            }
+                        </li>
+
+                    }
+
+                    @if (funcionario.Funcionario.Permisos.Find(e => e.Nombre == "VerEnMenuModelos" && e.Estado == true) != null)
+                    {
+                        <li class="sidebar-item">
+                            <a  class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse" data-bs-placement="right" title="Modelos"
+                               data-bs-target="#modelos" aria-expanded="@(ViewBag.DropdownActive == "modelos" ? "true" : "false")" aria-controls="modelos">
+                                <i class="fa-solid fa-mobile-retro"></i>
+                                <span>Modelos</span>
+                            </a>
+
+                            @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearModelos" && e.Estado == true) || (e.Nombre == "ConsultarModelos" && e.Estado == true)
+                           || (e.Nombre == "EditarModelos" && e.Estado == true) || (e.Nombre == "EliminarModelos" && e.Estado == true) || (e.Nombre == "InformesModelos" && e.Estado == true)) != null)
+                            {
+
+                                <ul id="modelos" class="sidebar-dropdown @(ViewBag.DropdownActive == "modelos" ? "show" : "") list-unstyled collapse" data-bs-parent="#sidebar">
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearModelos" && e.Estado == true)
+                                   || (e.Nombre == "EditarModelos" && e.Estado == true) || (e.Nombre == "EliminarModelos" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "gestionarModelos" ? "active" : "")">
+                                            <a asp-controller="Modelo" asp-action="Gestionar" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Gestión de modelos">
+                                                <i class="fa-solid fa-folder-tree"></i>
+                                                <span>Gestionar</span>
+                                            </a>
+                                        </li>
+
+                                    }
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "ConsultarModelos" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "consultasModelos" ? "active" : "")">
+                                            <a asp-controller="Modelo" asp-action="Consultas" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Consultas de modelos">
+                                                <i class="fa-solid fa-magnifying-glass"></i>
+                                                <span>Consultas</span>
+                                            </a>
+                                        </li>
+
+                                    }
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "InformesModelos" && e.Estado == true)) != null)
+
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "informesModelos" ? "active" : "")">
+                                            <a asp-controller="Modelo" asp-action="Informes" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Informes de modelos">
+                                                <i class="fa-solid fa-chart-pie"></i>
+                                                <span>Informes</span>
+                                            </a>
+                                        </li>
+
+                                    }
+                                </ul>
+
+                            }
+
+                        </li>
+
+                    }
+
+                    @if (funcionario.Funcionario.Permisos.Find(e => e.Nombre == "VerEnMenuTokens" && e.Estado == true) != null)
+                    {
+                        <li class="sidebar-item">
+                            <a class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse" data-bs-placement="right" title="Tokens"
+                               data-bs-target="#tokens" aria-expanded="@(ViewBag.DropdownActive == "tokens" ? "true" : "false")" aria-controls="tokens">
+                                <i class="fa-solid fa-key"></i>
+                                <span>Tokens</span>
+                            </a>
+
+                            @if (funcionario.Funcionario.Permisos.Find(e =>  (e.Nombre == "ConsultarTokens" && e.Estado == true)
+                           || (e.Nombre == "CrearTokensAdministrativos" && e.Estado == true) || (e.Nombre == "CrearTokensTecnicos" && e.Estado == true) ||
+                           (e.Nombre == "CrearTokensRecargasTecnicas" && e.Estado == true) || (e.Nombre == "InformesTokens" && e.Estado == true)
+                           || (e.Nombre == "CrearTokensCambioTid" && e.Estado == true) || (e.Nombre == "GeneracionMasivaTokens" && e.Estado == true)
+                           || (e.Nombre == "CrearTokensBorradoCredito" && e.Estado == true) || (e.Nombre == "CrearTokensDesbloqueo" && e.Estado == true)
+                           || (e.Nombre == "CrearTokensRecargaTecnica" && e.Estado == true) || (e.Nombre == "CrearTokensPosAPre" && e.Estado == true)
+                           || (e.Nombre == "CrearTokensPreAPos" && e.Estado == true) || (e.Nombre == "CrearTokensCambioTid" && e.Estado == true)
+                           || (e.Nombre == "CrearTokensOpenRelay" && e.Estado == true) || (e.Nombre == "CrearTokensCloseRelay" && e.Estado == true)
+                           || (e.Nombre == "CrearTokensAtencionCliente" && e.Estado == true) || (e.Nombre == "CrearTokensAtencionReclamos" && e.Estado == true)
+                           || (e.Nombre == "CrearTokensAtencionTecnica" && e.Estado == true) || (e.Nombre == "CrearTokensTecnicosAvanzados" && e.Estado == true)
+                           || (e.Nombre == "GeneracionMasivaTokens" && e.Estado == true)) != null)
+                            {
+                                <ul id="tokens" class="sidebar-dropdown  list-unstyled collapse @(ViewBag.DropdownActive == "tokens" ? "show" : "")" data-bs-parent="#sidebar">
+
+                                   @*  @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearTokensAdministrativos" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "administrativos" ? "active" : "")">
+                                            <a asp-controller="Token" asp-action="Administrativos" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Administrativos">
+                                                <i class="fa-solid fa-user-tie"></i>
+                                                <span>Administrativos</span>
+                                            </a>
+                                        </li>
+
+                                    } *@
+
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearTokensAtencionCliente" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item">
+                                            <a class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse" data-bs-placement="right" title="Atención Cliente"
+                                               data-bs-target="#atencionCliente" aria-expanded="@(ViewBag.DropdownActive2 == "atencionCliente" ? "true" : "false")" aria-controls="atencionCliente">
+                                                <i class="fa-solid fa-id-badge"></i>
+                                                <span>Atención Cliente</span>
+                                            </a>
+
+                                            @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearTokensDesbloqueo" && e.Estado == true)
+                                           || (e.Nombre == "CrearTokensCambioTid" && e.Estado == true)) != null)
+                                            {
+                                                <ul id="atencionCliente" class="sidebar-dropdown  list-unstyled collapse @(ViewBag.DropdownActive2 == "atencionCliente" ? "show" : "")" data-bs-parent="#sidebarHijo">
+                                                   
+                                                     @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearTokensDesbloqueo" && e.Estado == true)) != null){
+                                                          <li class="sidebar-item @(ViewBag.ActiveMenu == "desbloqueoAC" ? "active" : "")">
+                                                        <a asp-controller="Token" asp-action="Desbloqueo" asp-route-source="atencionCliente" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Desbloqueo">
+                                                            <i class="fa-solid fa-unlock"></i>
+                                                            <span>Desbloqueo</span>
+                                                        </a>
+                                                    </li>
+                                                    }
+
+                                                    @if (funcionario.Funcionario.Permisos.Find(e =>
+                                                   (e.Nombre == "CrearTokensCambioTid" && e.Estado == true)) != null)
+                                                    {
+                                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "cambioLlavesAC" ? "active" : "")">
+                                                            <a asp-controller="Token" asp-action="CambioLlaves" asp-route-source="atencionCliente" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Cambio de llaves">
+                                                                <i class="fa-regular fa-clock"></i>
+                                                                <span>Cambio llaves Tid</span>
+                                                            </a>
+                                                        </li>
+                                                    }
+
+                                                   
+
+                                                   
+                                                </ul>
+                                            }
+
+
+                                               
+                                        </li>
+                                    }
+
+
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearTokensAtencionReclamos" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item">
+                                            <a class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse" data-bs-placement="right" title="Atención Cliente"
+                                               data-bs-target="#atencionReclamos" aria-expanded="@(ViewBag.DropdownActive2 == "atencionReclamos" ? "true" : "false")" aria-controls="atencionReclamos">
+                                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                                <span>Atención reclamos</span>
+                                            </a>
+
+                                            @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearTokensRecargasTecnicas" && e.Estado == true)) != null)
+                                            {
+                                                <ul id="atencionReclamos" class="sidebar-dropdown  list-unstyled collapse @(ViewBag.DropdownActive2 == "atencionReclamos" ? "show" : "")" data-bs-parent="#sidebarHijo">
+                                                  
+                                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearTokensRecargasTecnicas" && e.Estado == true)) != null)
+                                                    {
+                                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "recargaTecnicaAR" ? "active" : "")">
+                                                            <a asp-controller="Token" asp-action="RecargasTecnicas" asp-route-source="atencionReclamos" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Recargas técnicas">
+                                                                <i class="fa-solid fa-battery-half"></i>
+                                                                <span>Recargas técnicas</span>
+                                                            </a>
+                                                        </li>
+                                                    }
+
+                                                   
+
+                                                </ul>
+                                            }
+
+                                           
+                                        </li>
+                                    }
+
+
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearTokensAtencionTecnica" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item">
+                                            <a class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse" data-bs-placement="right" title="Atención Cliente"
+                                               data-bs-target="#atencionTecnica" aria-expanded="@(ViewBag.DropdownActive2 == "atencionTecnica" ? "true" : "false")" aria-controls="atencionTecnica">
+                                                <i class="fa-solid fa-plug-circle-exclamation"></i>
+                                                <span>Atención técnica</span>
+                                            </a>
+
+                                             @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearTokensDesbloqueo" && e.Estado == true)
+                                           || (e.Nombre == "CrearTokensBorradoCredito" && e.Estado == true)) != null)
+                                            {
+                                                <ul id="atencionTecnica" class="sidebar-dropdown  list-unstyled collapse @(ViewBag.DropdownActive2 == "atencionTecnica" ? "show" : "")" data-bs-parent="#sidebarHijo">
+                                                    
+                                                     @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearTokensDesbloqueo" && e.Estado == true) ) != null)
+                                                    {
+                                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "desbloqueoAT" ? "active" : "")">
+                                                            <a asp-controller="Token" asp-action="Desbloqueo" asp-route-source="atencionTecnica" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Desbloqueo">
+                                                                <i class="fa-solid fa-unlock"></i>
+                                                                <span>Desbloqueo</span>
+                                                            </a>
+                                                        </li>
+                                                    }
+
+                                                    
+
+                                                     @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearTokensBorradoCredito" && e.Estado == true)) != null)
+                                                    {
+                                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "borradoCredito" ? "active" : "")">
+                                                            <a asp-controller="Token" asp-action="BorradoCredito" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Borrado crédito">
+                                                                <i class="fa-solid fa-eraser"></i>
+                                                                <span>Borrado crédito</span>
+                                                            </a>
+                                                        </li>
+                                                    }
+
+                                                  
+
+                                                </ul>
+                                            }
+
+                                           
+                                        </li>
+                                    }
+
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearTokensTecnicosAvanzados" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item ">
+                                        <a class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse" data-bs-placement="right" title="Atención Cliente"
+                                           data-bs-target="#tecnicosAvanzados" aria-expanded="@(ViewBag.DropdownActive2 == "tecnicosAvanzados" ? "true" : "false")" aria-controls="tecnicosAvanzados">
+                                            <i class="fa-solid fa-compass-drafting"></i>
+                                            <span>Técnicos avanzados</span>
+                                        </a>
+
+                                         @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearTokensPosAPre" && e.Estado == true)
+                                             || (e.Nombre == "CrearTokensPreAPos" && e.Estado == true)) != null)
+                                            {
+                                                <ul id="tecnicosAvanzados" class="sidebar-dropdown  list-unstyled collapse @(ViewBag.DropdownActive2 == "tecnicosAvanzados" ? "show" : "")" data-bs-parent="#sidebarHijo">
+                                                   
+                                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearTokensPosAPre" && e.Estado == true)) != null){
+                                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "postAPre" ? "active" : "")">
+                                                            <a asp-controller="Token" asp-action="PostAPre" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Postpago a prepago">
+                                                                <i class="fa-regular fa-credit-card"></i>
+                                                                <span>Postpago a prepago</span>
+                                                            </a>
+                                                        </li>
+                                                    }
+                                                   
+
+                                                   @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearTokensPreAPos" && e.Estado == true)) != null)
+                                                    {
+                                                         <li class="sidebar-item @(ViewBag.ActiveMenu == "preAPost" ? "active" : "")">
+                                                        <a asp-controller="Token" asp-action="PreAPost" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Prepago a Postpago">
+                                                            <i class="fa-solid fa-money-bill-wave"></i>
+                                                            <span>Prepago a postpago</span>
+                                                        </a>
+                                                    </li>
+                                                    }
+
+                                                   
+
+                                                </ul>
+                                            }
+
+
+                                       
+                                    </li>
+                                    }
+
+                                    
+
+
+                                   @*  @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearTokensTecnicos" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "tecnicos" ? "active" : "")">
+                                            <a asp-controller="Token" asp-action="Tecnicos" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Técnicos">
+                                                <i class="fa-solid fa-toolbox"></i>
+                                                <span>Técnicos</span>
+                                            </a>
+                                        </li>
+
+                                    } *@
+
+                                   @*  @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearTokensRecargasTecnicas" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "recargaTecnica" ? "active" : "")">
+                                            <a asp-controller="Token" asp-action="RecargasTecnicas" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Recargas técnicas">
+                                                <i class="fa-solid fa-battery-half"></i>
+                                                <span>Recargas técnicas</span>
+                                            </a>
+                                        </li>
+
+                                    }
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearTokensCambioTid" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "cambioLlaves" ? "active" : "")">
+                                            <a asp-controller="Token" asp-action="CambioLlaves" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Cambio de llaves">
+                                                <i class="fa-regular fa-clock"></i>
+                                                <span>Cambio llaves Tid</span>
+                                            </a>
+                                        </li>
+
+                                    } *@
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "GeneracionMasivaTokens" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "generacionMasiva" ? "active" : "")">
+                                            <a asp-controller="Token" asp-action="GeneracionMasiva" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Generación masiva">
+                                                <i class="fa-solid fa-coins"></i>
+                                                <span>Generación masiva</span>
+                                            </a>
+                                        </li>
+
+                                    }
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "VerTokensGeneradosMasivamente" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "verTokensMasivos" ? "active" : "")">
+                                            <a asp-controller="Token" asp-action="TokensGenerados" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Tokens generados">
+                                                <i class="fa-solid fa-tower-broadcast"></i>
+                                                <span>Tokens generados</span>
+                                            </a>
+                                        </li>
+
+                                    }
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "ConsultarTokens" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "consultasTokens" ? "active" : "")">
+                                            <a asp-controller="Token" asp-action="Consultas" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Consultas de tokens">
+                                                <i class="fa-solid fa-magnifying-glass"></i>
+                                                <span>Consultas</span>
+                                            </a>
+                                        </li>
+
+                                    }
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "InformesTokens" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "informesTokens" ? "active" : "")">
+                                            <a asp-controller="Token" asp-action="Informes" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Informes de tokens">
+                                                <i class="fa-solid fa-chart-pie"></i>
+                                                <span>Informes</span>
+                                            </a>
+                                        </li>
+
+                                    }
+                                </ul>
+
+                            }
+
+                        </li>
+                    }
+
+                    @if (funcionario.Funcionario.Permisos.Find(e => e.Nombre == "VerEnMenuSolicitudes" && e.Estado == true) != null)
+                    {
+                        <li class="sidebar-item">
+                            <a  class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse" data-bs-placement="right" title="Solicitudes"
+                               data-bs-target="#solicitudes" aria-expanded="@(ViewBag.DropdownActive == "solicitudes" ? "true" : "false")" aria-controls="solicitudes">
+                                <i class="fa-solid fa-user-plus"></i>
+                                <span>Solicitudes</span>
+                            </a>
+
+                            @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearSolicitudes" && e.Estado == true) || (e.Nombre == "ConsultarSolicitudes" && e.Estado == true)
+                            || (e.Nombre == "EditarSolicitudes" && e.Estado == true)  || (e.Nombre == "InformesSolicitudes" && e.Estado == true)) != null)
+                            {
+                                <ul id="solicitudes" class="sidebar-dropdown @(ViewBag.DropdownActive == "solicitudes" ? "show" : "") list-unstyled collapse" data-bs-parent="#sidebar">
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearSolicitudes" && e.Estado == true) 
+                                   || (e.Nombre == "EditarSolicitudes" && e.Estado == true)) != null){
+
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "gestionarSolicitudes" ? "active" : "")">
+                                            <a asp-controller="Solicitud" asp-action="Gestionar" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Gestión de solicitudes">
+                                                <i class="fa-solid fa-folder-tree"></i>
+                                                <span>Gestionar</span>
+                                            </a>
+                                        </li>
+
+                                    }
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "InformesSolicitudes" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "informesSolicitudes" ? "active" : "")">
+                                            <a asp-controller="Solicitud" asp-action="Informes" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Informes de solicitudes">
+                                                <i class="fa-solid fa-chart-pie"></i>
+                                                <span>Informes</span>
+                                            </a>
+                                        </li>
+
+                                    }
+                                </ul>
+
+                            }
+
+                        </li>
+                    }
+
+                    @if (funcionario.Funcionario.Permisos.Find(e => e.Nombre == "VerEnMenuCajas" && e.Estado == true) != null)
+                    {
+                        <li class="sidebar-item">
+                            <a  class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse" data-bs-placement="right" title="Cajas de encriptación"
+                            data-bs-target="#cajas" aria-expanded="@(ViewBag.DropdownActive == "cajas" ? "true" : "false")" aria-controls="cajas">
+                                <i class="fa-solid fa-boxes-stacked"></i>
+                                <span>Cajas</span>
+                            </a>
+
+                            @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearCajas" && e.Estado == true) || (e.Nombre == "ConsultarCajas" && e.Estado == true)
+                           || (e.Nombre == "EditarCajas" && e.Estado == true) || (e.Nombre == "EliminarCajas" && e.Estado == true) || (e.Nombre == "InformesCajas" && e.Estado == true)) != null)
+                            {
+                                <ul id="cajas" class="sidebar-dropdown @(ViewBag.DropdownActive == "cajas" ? "show" : "") list-unstyled collapse" data-bs-parent="#sidebar">
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "CrearCajas" && e.Estado == true)
+                                   || (e.Nombre == "EditarCajas" && e.Estado == true) || (e.Nombre == "EliminarCajas" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "gestionarCajas" ? "active" : "")">
+                                            <a asp-controller="Caja" asp-action="Gestionar" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Gestión de cajas">
+                                                <i class="fa-solid fa-folder-tree"></i>
+                                                <span>Gestionar</span>
+                                            </a>
+                                        </li>
+                                    }
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "ConsultarCajas" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "consultasCajas" ? "active" : "")">
+                                            <a asp-controller="Caja" asp-action="Consultas" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Consultas de cajas">
+                                                <i class="fa-solid fa-magnifying-glass"></i>
+                                                <span>Consultas</span>
+                                            </a>
+                                        </li>
+
+                                    }
+
+                                    @if (funcionario.Funcionario.Permisos.Find(e => (e.Nombre == "InformesCajas" && e.Estado == true)) != null)
+                                    {
+                                        <li class="sidebar-item @(ViewBag.ActiveMenu == "informesCajas" ? "active" : "")">
+                                            <a asp-controller="Caja" asp-action="Informes" class="sidebar-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Informes de cajas">
+                                                <i class="fa-solid fa-chart-pie"></i>
+                                                <span><span>Informes</span></span>
+
+                                            </a>
+                                        </li>
+                                    }
+                                   
+                                </ul>
+
+                            }
+                        </li>
+                    }
+
+
+                    <li class="sidebar-item mg-top-auto @(ViewBag.ActiveMenu == "manual" ? "active" : "")" data-bs-toggle="tooltip" data-bs-placement="right" title="Manual de Usuario">
+                        <a class="sidebar-link" aria-label="Manual" asp-controller="Manual" asp-action="Index">
+                            <i class="fa-solid fa-file-circle-question"></i>
+                            <span>Manual de Usuario</span>
+                        </a>
+                    </li>
+                    
+                    <li class="sidebar-item mg-top-auto"  data-bs-toggle="tooltip" data-bs-placement="right" title="Cerrar sesión">
+                        <a class="sidebar-link" aria-label="Cerrar Sesión" asp-controller="Home" asp-action="SignOut" >
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Cerrar Sesión</span>
+                        </a>
+                    </li>
+
+
+
+
+                </ul>
+
+            </aside>
+
+
+        </div>
+
+        
+        
+
+        <div class="main p-1 expanded">
+
+            
+            <div class="sts-container">
+                <img src="~/img/STS-Logo.svg" alt="STS_Logo" class="top-right-image">
+            </div>
+
+            <div>
+                <h1>
+                    @RenderBody()
+                </h1>
+            </div>
+        </div>
+
+        
+
+        
+    </div>
+
+
+
+   @* 
+     <script src="~/js/fontawesome.js" asp-append-version="true"></script>
+      <script src="~/js/brands.js" asp-append-version="true"></script>
+       <script src="~/js/solid.js" asp-append-version="true"></script>
+       <script src="~/js/regul.js" asp-append-version="true"></script>
+ *@
+
+   @*  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> *@
+     <script src="~/js/sweetalert2@11.js" asp-append-version="true"></script>
+
+
+    @* <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script> *@
+     <script src="~/js/bootstrap5.bundle.min.js" asp-append-version="true"></script>
+    
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script src="~/js/Views/Shared/Layout.js" asp-append-version="true"></script>
+
+
+
+  
+
+
+
+
+
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

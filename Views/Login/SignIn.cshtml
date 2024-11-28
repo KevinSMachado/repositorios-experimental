@@ -1,0 +1,149 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Iniciar Sesión - Tokenergy - Portal Web</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="icon" type="image/png" href="~/ExcelecIcon.ico">
+
+
+    <link rel="stylesheet" href="~/css/fontAwesome/css/all.css" asp-append-version="true" />
+
+   
+    @* <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet" /> *@
+    <link rel="stylesheet" href="~/css/fontawesome.css" asp-append-version="true" />
+
+    
+
+</head>
+<body>
+
+    <div id="loadingOverlay" class="loader-overlay"></div>
+    <div id="loadingScreen" class="loader"></div>
+
+    <div class="container mg-top-10pc">
+
+        <div class="row justify-content-center">
+
+            <div class="col-lg-7 col-sm-12 col-md-12 align-self-center">
+
+                <img class="img-logo" src="~/img/TokEnergyPWExcEPM.png" alt="Logo TKGPWEB" />
+            </div>
+
+            <div class="col-lg-5 col-md-12 col-sm-12">
+
+                <div class="card mg-20 login-card">
+
+
+                    <div class="card-body mg-top-15px">
+
+                        <div class="alg-center mg-top-5px">
+                            <h4 class="txt-lemon-green">Iniciar Sesión</h4>
+                        </div>
+
+                        <form id="LoginForm" asp-controller="Login" asp-action="SignIn" method="POST">
+
+
+                            <div class="row mg-top-40px mg-bn-40px">
+                                <div class="col-12">
+                                    <label for="codFuncionario">
+                                        <h6>Código del funcionario <span class="color-red">*</span></h6>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text br-ip-lemon-green color-lemon-green">
+                                            <i class="fa-solid fa-user"></i>
+                                        </span>
+                                        <input id="Codigo" name="Codigo" autocomplete="off" type="text" class=" form-control form-control-lg br-ip-lemon-green" placeholder="Código" required />
+
+                                    </div>
+
+                                </div>
+
+                                <div class="col-12 mg-top-20px">
+
+                                    <label for="claveFuncionario">
+                                        <h6>Clave del funcionario <span class="color-red">*</span></h6>
+                                    </label>
+                                    <div class="input-group">
+
+                                        <span class="input-group-text br-ip-lemon-green color-lemon-green">
+                                            <i class="fa-solid fa-key"></i>
+                                        </span>
+
+                                        <input id="Clave" name="Clave" autocomplete="off" type="password" class="  form-control form-control-lg br-ip-lemon-green" placeholder="Clave" required />
+
+
+                                    </div>
+
+                                </div>
+
+                                <div class="col-12 mg-top-35px">
+
+                                    <button type="submit" class="btn btn-lemon-green w-100 form-control btn-lg form-control-lg">Iniciar sesión</button>
+                                </div>
+
+                                @* <div style="display: none;" class="col-lg-6 col-sm-12 col-md-12" style="margin-top: 35px;">
+
+                                <a href="#" class="txt-lemon-green"><h5>Solicitar cuenta</h5></a>
+                                </div>
+
+
+
+                                <div style="display: none;" class="col-lg-6 col-sm-12 col-md-12" style="margin-top: 35px;">
+                                <a href="#" class="txt-lemon-green">
+                                <h5>Olvidé mi contraseña</h5>
+                                </a>
+                                </div> *@
+                            </div>
+
+
+
+                            @if (ViewData["ErrorMessage"] != null)
+                            {
+
+                                <div class="form-group">
+
+                                    <div class="alert alert-danger" role="alert">
+
+                                        @ViewData["ErrorMessage"]
+
+                                    </div>
+
+                                </div>
+                            }
+
+
+
+                        </form>
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/sweetalert2@11.js" asp-append-version="true"></script>
+
+   @*  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> *@
+
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script src="~/js/Views/Login/SignIn.js" asp-append-version="true"></script>
+
+
+</body>
+</html>

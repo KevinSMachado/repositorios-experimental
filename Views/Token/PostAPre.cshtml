@@ -1,0 +1,197 @@
+﻿@using Newtonsoft.Json
+@using TK_ENERGY_GP_PORTAL.Models.DTO
+
+
+@{
+    ViewData["Title"] = "PostpagoAPrepago";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@{
+    var tokensGenerados = new List<TokensSts> { };
+    if (TempData["tokensGenerados"] != null)
+    {
+        var tempdata = TempData["tokensGenerados"] as string;
+        tokensGenerados = JsonConvert.DeserializeObject<List<TokensSts>>(tempdata);
+    }
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tokens Postpago a Prepago</title>
+    <link rel="stylesheet" href="~/css/fontAwesome/css/all.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="icon" type="image/x-icon" href="~/ExcelecIcon.ico" />
+</head>
+<body>
+    <div id="loadingOverlay" class="loader-overlay"></div>
+    <div id="loadingScreen" class="loader"></div>
+
+    <div class="container">
+
+        <div class="card rounded-0 br-general-card">
+
+            <div class="card-body mg-20px">
+
+                <h2 class="txt-forest-green text-center">Tokens Postpago a Prepago</h2>
+
+
+                <form id="PostAPreForm" asp-controller="Token" asp-action="genTokenAdminTec" method="POST">
+
+
+                    <div class="row mg-top-50px">
+
+                        <input type="hidden" id="tipoToken" name="tipoToken" value="">
+
+                        <input type="hidden" id="vista" name="vista" value="PostAPre">
+
+
+                        <div class="col-12 mg-bn-20px">
+
+                            <label for="MEDIDOR">
+                                <h5>Número de medidor (Serial) <span class="color-red">*</span> </h5>
+                            </label>
+                            <input type="text" class="form-control form-control-lg br-ip-lemon-green w-100" name="serial" autocomplete="Off" required pattern="^\d{11}$|^\d{13}$" id="MEDIDOR" placeholder="Ingresa el serial de tu medidor" />
+
+
+                        </div>
+
+
+
+                        <div class="col-12 mg-bn-70px">
+
+                            <label for="MEDIDOR">
+                                <h5>Descripción de la solicitud <span class="color-red">*</span></h5>
+                            </label>
+                            <textarea id="notas" type="text" required class="form-control form-control-lg br-ip-lemon-green" name="descripcion" placeholder="Ingrese la descripción aquí"></textarea>
+
+                        </div>
+
+                      
+
+                       
+
+                       
+
+
+                    </div>
+
+                    <div class="row justify-content-center">
+
+                        <div class="col-lg-4 col-sm-12 col-md-12 align-self-center">
+
+                            <button type="submit" id="PasarPrepagoBoton" class=" mg-bn-30px btn-lg btn btn-lemon-green w-100" onclick="setOperacionToken('cambiopostaprepago')">Pasar a Prepago</button>
+
+
+
+                        </div>
+
+                    </div>
+
+
+
+                </form>
+
+            </div>
+
+        </div>
+
+
+
+
+
+        <div class="modal fade" id="modalTokens" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="ModalTokensLabel" aria-hidden="true">
+            <div class="modal-dialog br-forest-green">
+                <div class="modal-content br-forest-green">
+                    <div class="modal-header">
+
+                        <h4 id="ModalTokensLabel" class="txt-forest-green modal-title fs-5">¡Felicidades, token(s) generado(s) con éxito!</h4>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+
+
+                     
+                    </div>
+                    <div class="modal-body">
+
+                        @if (tokensGenerados != null)
+                        {
+                            @for (int i = 0; i < tokensGenerados.Count; i++)
+                            {
+                                var token = tokensGenerados[i] as TokensSts;
+                                var tokenId = "token" + i;
+                                var alertToken = "alertToken" + i;
+
+                                string tokenConEspacios = "";
+
+                                for (int j = 0; j < token.token.Length; j++)
+                                {
+                                    if (j > 0 && j % 4 == 0)
+                                    {
+                                        tokenConEspacios += " "; // Agrega un espacio cada 4 caracteres
+                                    }
+                                    tokenConEspacios += token.token[j];
+                                }
+
+                                <div class="row">
+
+                                    <div class="col-12">
+
+                                        <div id="@alertToken" class="token-copiado mb10 alert alert-forest-green" role="alert">
+
+                                            ¡Token copiado con éxito!
+                                        </div>
+
+                                    </div>
+
+                                    <div class="col-lg-10 col-md-10 col-sm-12">
+                                        <label id="token" name="token" class="token-label form-control br-ip-forest-green w-100 input-token">
+                                            <div id="@tokenId" class="token" >@tokenConEspacios</div>
+                                        </label>
+                                    </div>
+                                    <div class="col-lg-2 col-md-2 col-sm-12">
+                                        <button type="button" onclick="copyToken('@token.token', '@alertToken')" class="btn btn-lemon-green btn-lg w-100">
+                                            <i class="fa-regular fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+
+                            }
+
+                        }
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-lemon-green" data-bs-dismiss="modal">Cerrar</button>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+
+
+
+    </div>
+
+
+    @*   <script src="~/js/fontawesome.js" asp-append-version="true"></script>
+    <script src="~/js/brands.js" asp-append-version="true"></script>
+    <script src="~/js/solid.js" asp-append-version="true"></script>
+    *@
+    <script src="~/js/Views/Token/PostAPre.js" asp-append-version="true"></script>
+  <script>
+        var tokensGenerados = @Html.Raw(Json.Serialize(TempData["tokensGenerados"]));
+        var mensajeError = @Html.Raw(Json.Serialize(TempData["MensajeError"]));
+
+  </script>
+
+</body>
+</html>
+
+
+

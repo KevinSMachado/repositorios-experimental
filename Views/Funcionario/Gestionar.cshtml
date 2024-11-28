@@ -1,0 +1,695 @@
+﻿@using Newtonsoft.Json
+@using TK_ENERGY_GP_PORTAL.Models.DTO
+@using TK_ENERGY_GP_PORTAL.Models.Utils
+
+@model TK_ENERGY_GP_PORTAL.Models.Utils.Funcionario
+
+@{
+    ViewData["Title"] = "Gestionar";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+
+}
+
+@{
+    var funcionario = new UserCredentialsDto();
+    var funcionarioLoggedIn = Context.Request.HttpContext.Session.GetString("funcionario");
+
+    if (funcionarioLoggedIn != null)
+    {
+        funcionario = JsonConvert.DeserializeObject<UserCredentialsDto>(funcionarioLoggedIn);
+
+        TempData["funcionario"] = funcionario;
+
+    }
+
+
+
+    var fabricantesModelos = new List<FabricantesRespDTO> { };
+
+    var servicios = new List<ServiciosRespDTO> { };
+
+    var medidores = new List<MedidorRespDTO> { };
+
+    var roles = new List<RolPermisos> { };
+
+    if (TempData["roles"] != null)
+    {
+        roles = TempData["roles"] as List<RolPermisos>;
+        //fabricantesModelos = JsonConvert.DeserializeObject<List<FabricantesRespDTO>>(tempdata);
+    }
+
+    if (TempData["servicios"] != null)
+    {
+        servicios = TempData["servicios"] as List<ServiciosRespDTO>;
+    }
+
+    if (TempData["medidores"] != null)
+    {
+        medidores = TempData["medidores"] as List<MedidorRespDTO>;
+    }
+}
+
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestionar Funcionarios</title>
+    @*  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> *@
+    <link rel="stylesheet" href="~/css/fontAwesome/css/all.css" asp-append-version="true" />
+
+
+    @*  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"> *@
+    <link rel="stylesheet" href="~/css/bootstrap5.min.css" asp-append-version="true" />
+
+
+    @* <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css"> *@
+    <link rel="stylesheet" href="~/css/dataTables.bootstrap5.min.css" asp-append-version="true" />
+
+
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+
+    @*  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.dataTables.min.css"> *@
+    <link rel="stylesheet" href="~/css/responsive.dataTables.min.css" asp-append-version="true" />
+
+
+
+    @*  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.min.css"> *@
+    <link rel="stylesheet" href="~/css/chosen.min.css" asp-append-version="true" />
+
+
+
+
+
+</head>
+<body>
+
+    <div id="loadingOverlay" class="loader-overlay"></div>
+    <div id="loadingScreen" class="loader"></div>
+    <div class="container">
+
+        <div class="content">
+            <div class="card rounded-0 br-general-card">
+                <div class="card-body mg-20px" >
+                    <h2 class="text-center txt-forest-green">Gestión de Funcionarios</h2>
+
+
+                    <div class="row mg-top-50px" >
+
+                        @if (funcionario.Funcionario.Permisos.Find(e => e.Nombre == "CrearFuncionarios" && e.Estado == true) != null)
+                        {
+                            <div class="col-lg-4 col-md-12 col-sm-12 mb-2">
+                                <button type="button" class="btn-lg btn btn-lemon-green w-100" onclick="abrirCrearFuncionarioModal()">Crear funcionario <i class="fa-solid fa-plus"></i></button>
+                            </div>
+                        }
+
+                        <div class="col-lg-4 col-md-12 col-sm-12 mb-2">
+                            <button id="refrescarTabla" type="button" class="btn-lg btn btn-secondary w-100">Refrescar tabla <i class="fa-solid fa-rotate-right"></i></button>
+                        </div>
+
+                       @*  @if (funcionario.Funcionario.Permisos.Find(e => e.Nombre == "VerInfoCompletaFuncionarios" && e.Estado == true) != null)
+                        {
+                            <div class="col-lg-4 col-md-12 col-sm-12 mb-2">
+                                <button type="button" onclick="verInfoCompletaFuncionarioModal()" class="btn-lg btn btn-lemon-green w-100">Ver información completa <i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>
+                            </div>
+                        } *@
+
+                        <div class="col-12  mb-2">
+                            <label for="filtro">
+                                <h5>Selecciona los filtros a usar </h5>
+                            </label>
+                            <select id="filtrosFuncionarios" class="chosen form-control br-ip-lemon-green" multiple>
+                                <option value="nombre" selected>Nombre</option>
+
+                            </select>
+                        </div>
+
+                        <form id="filtrosForm">
+                            <div class="row">
+
+                                <!-- Columna Codigo  -->
+                                <div id="filtroNombre" class="col-lg-6 col-md-12">
+                                    <label for="nombre">
+                                        <h5>Nombre</h5>
+                                    </label>
+                                    <input id="nombreFiltro" autocomplete="off"  type="text" required class="form-control form-control-lg br-ip-lemon-green w-100" placeholder="Ingresa el nombre">
+                                </div>
+
+                                <!-- Columna Botón de búsqueda -->
+                                <div id="buscarPorFiltro" class="col-lg-6 col-md-12">
+                                    <label id="labelBotonFiltro" for="botonfiltro">
+                                        <h5></h5>
+                                    </label>
+                                    <button type="submit" class="btn-lg btn btn-lemon-green w-100">Buscar <i class="fa-solid fa-filter"></i></button>
+                                </div>
+
+                                <div id="removerFiltros" class="col-lg-12 col-md-12 mb-3 display-none">
+                                    <label id="labelRemoverFiltros" for="botonfiltro">
+                                        <h5></h5>
+                                    </label>
+                                    <button type="button" onclick="removerFiltros()" class="btn-lg btn btn-secondary w-100">Remover filtros <i class="fa-solid fa-filter-circle-xmark"></i></button>
+                                </div>
+
+                            </div>
+                        </form>
+
+
+                        <div class="col-12">
+
+                            <h5 class="display-none" id="filtrosUsados"></h5>
+
+                        </div>
+
+                        <div class="col-12 mb-5">
+                            <table id="tablaFuncionarios" class="table table-bordered dt-responsive nowrap w-100" cellspacing="0">
+                                <thead class="thead-tea-green">
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+
+
+                    <div class="row justify-content-center">
+
+                        @if (funcionario.Funcionario.Permisos.Find(e => e.Nombre == "ImportarFuncionarios" && e.Estado == true) != null)
+                        {
+                            <div class="col-lg-4 col-md-6 col-sm-12 mb-2 align-self-center">
+                                <button type="button" class="btn-lg btn btn-lemon-green w-100">Importar funcionarios <i class="fa-solid fa-upload"></i></button>
+                            </div>
+                        }
+
+                        @if (funcionario.Funcionario.Permisos.Find(e => e.Nombre == "ExportarFuncionarios" && e.Estado == true) != null)
+                        {
+                            <div class="col-lg-4 col-md-6 col-sm-12 mb-2 align-self-center">
+                                <button type="button" class="btn-lg btn btn-lemon-green w-100">Exportar funcionarios <i class="fa-solid fa-download"></i></button>
+                            </div>
+                        }
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+
+    <div class="modal fade" id="crearFuncionarioModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="crearFuncionarioModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content br-forest-green">
+                <div class="modal-header">
+                    <h4 class="modal-title txt-forest-green" id="crearFuncionarioModalLabel">Crear Funcionario</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="funcionarioForm" asp-controller="Funcionario" asp-action="crearFuncionario" method="POST">
+                    <div class="modal-body">
+
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+
+                                <label for="Empresa">
+                                    <h5>Empresa <span class="color-red" >*</span> </h5>
+                                </label>
+
+                                <select class="form-select form-select-lg br-ip-lemon-green w-100" id="empresa" disabled aria-label="Seleccionar Empresa">
+                                    <option value=""></option>
+
+                                    <option selected value="0">EPM</option>
+
+                                </select>
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Proyecto">
+                                    <h5>Proyecto <span class="color-red" >*</span> </h5>
+                                </label>
+
+                                <select class="form-select form-select-lg br-ip-lemon-green w-100" id="proyecto" disabled aria-label="Seleccionar Proyecto">
+                                    <option value=""></option>
+
+                                    <option selected value="0">EPM</option>
+
+                                </select>
+                            </div>
+                        </div>
+
+
+                       
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Codigo">
+                                    <h5>Código <span class="color-red" >*</span> </h5>
+                                </label>
+                                <input asp-for="Codigo" required value="" type="text" class="form-control form-control-lg br-ip-lemon-green w-100" autocomplete="Off" id="codigo" placeholder="Ingresa el código" />
+
+                                
+                            </div>
+
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Nombre">
+                                    <h5>Nombre <span class="color-red" >*</span> </h5>
+                                </label>
+                                <input asp-for="Nombre" required value="" type="text" class="form-control form-control-lg br-ip-lemon-green w-100" autocomplete="Off" id="nombre" placeholder="Ingresa el nombre" />
+
+                                
+                            </div>
+
+
+                        </div>
+
+
+
+                        <div class="row mb-3">
+                           <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="clave1">
+                                    <h5>Contraseña <span class="color-red" >*</span> </h5>
+                                </label>
+                                <input required value="" type="password" class="form-control form-control-lg br-ip-lemon-green w-100" autocomplete="Off" id="clave1" placeholder="Ingresa la contraseña" />
+
+                                
+                            </div>
+
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="clave2">
+                                    <h5>Repite tu contraseña <span class="color-red" >*</span> </h5>
+                                </label>
+                                <input  required value="" type="password" class="form-control form-control-lg br-ip-lemon-green w-100" autocomplete="Off" id="clave2" placeholder="Repite la contraseña" />
+
+                                
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Estado">
+                                    <h5>Estado <span class="color-red" >*</span> </h5>
+                                </label>
+
+                                <select asp-for="Estado" required class="form-select form-select-lg br-ip-lemon-green w-100"  id="estado" aria-label="Seleccionar Estado">
+                                    <option value=""></option>
+
+                                    <option value="0">Activo</option>
+                                    <option value="1">Inactivo</option>
+                                    
+
+                                </select>
+                            </div>
+
+
+                           <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="rol">
+                                    <h5>Rol <span class="color-red" >*</span> </h5>
+                                </label>
+                                <select asp-for="Rol" required class="form-select form-select-lg br-ip-lemon-green w-100"  id="rol" aria-label="Seleccionar Rol">
+                                    <option value=""></option>
+
+                                    @foreach (var rol in roles)
+                                    {
+                                        @if(rol.Estado != false){
+                                            <option value="@rol.Id">@rol.Nombre</option>
+                                        }
+                                       
+                                       
+                                    }
+
+
+                                </select>
+                                
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="nis">
+                                    <h5>Correo eléctronico</h5>
+                                </label>
+                                <input asp-for="Correo" value="" type="email"  class="form-control form-control-lg br-ip-lemon-green w-100" autocomplete="Off" id="email" placeholder="Ingresa el correo" />
+
+
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Celular">
+                                    <h5>Celular </h5>
+                                </label>
+                                <input asp-for="Movil" value="" type="number"  class="form-control form-control-lg br-ip-lemon-green w-100" min="1000000000" max="9999999999" autocomplete="Off" id="movil" placeholder="Ingresa el celular" />
+
+                            </div>
+                        </div>
+
+                       
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-lg btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn-lg btn btn-lemon-green">Crear</button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editarFuncionarioModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="editarFuncionarioModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content br-forest-green">
+                <div class="modal-header">
+                    <h4 class="modal-title txt-forest-green" id="editarFuncionarioModalLabel">Editar Funcionario</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="editarFuncionarioForm" asp-controller="Funcionario" asp-action="actualizarFuncionario" method="POST">
+                    <div class="modal-body">
+
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Empresa">
+                                    <h5>Empresa <span class="color-red" >*</span> </h5>
+                                </label>
+                                <div class="input-group mb-3">
+                                    <select class="form-select form-select-lg br-ip-lemon-green" id="editarEmpresa" disabled aria-label="Seleccionar Empresa">
+                                        <option value=""></option>
+                                        <option selected value="0">EPM</option>
+                                    </select>
+                                    <button onclick="editarCampo('editarEmpresa')" disabled class="btn btn-lg btn-lemon-green" type="button" id="editarEmpresaBoton"><i class="fa-solid fa-pen"></i></button>
+                                </div>
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Proyecto">
+                                    <h5>Proyecto <span class="color-red" >*</span> </h5>
+                                </label>
+                                <div class="input-group mb-3">
+                                    <select class="form-select form-select-lg br-ip-lemon-green" id="editarProyecto" disabled aria-label="Seleccionar Proyecto">
+                                        <option value=""></option>
+                                        <option selected value="0">EPM</option>
+                                    </select>
+                                    <button onclick="editarCampo('editarProyecto')" disabled class="btn btn-lg btn-lemon-green" type="button" id="editarProyectoBoton"><i class="fa-solid fa-pen"></i></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <input type="hidden" asp-for="IdFuncionario" id="editarIdFuncionario">
+
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Codigo">
+                                    <h5>Código <span class="color-red" >*</span> </h5>
+                                </label>
+                                <input asp-for="Codigo" disabled required value="" type="text" class="form-control form-control-lg br-ip-lemon-green" autocomplete="Off" id="editarCodigo" placeholder="Ingresa el código" />
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Nombre">
+                                    <h5>Nombre <span class="color-red" >*</span> </h5>
+                                </label>
+                                <div class="input-group mb-3">
+                                    <input asp-for="Nombre" required value="" type="text" class="form-control form-control-lg br-ip-lemon-green" autocomplete="Off" id="editarNombre" disabled placeholder="Ingresa el nombre" />
+                                    <button onclick="editarCampo('editarNombre')" class="btn btn-lg btn-lemon-green" type="button" id="editarNombreBoton"><i class="fa-solid fa-pen"></i></button>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Estado">
+                                    <h5>Estado <span class="color-red" >*</span> </h5>
+                                </label>
+                                <div class="input-group mb-3">
+                                    <select asp-for="Estado" required class="form-select form-select-lg br-ip-lemon-green" id="editarEstado" disabled aria-label="Seleccionar Estado">
+                                       
+                                        <option value="0">Activo</option>
+                                        <option value="1">Inactivo</option>
+                                    </select>
+                                    <button onclick="editarCampo('editarEstado')" class="btn btn-lg btn-lemon-green" type="button" id="editarEstadoBoton"><i class="fa-solid fa-pen"></i></button>
+                                </div>
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="rol">
+                                    <h5>Rol <span class="color-red" >*</span> </h5>
+                                </label>
+                                <div class="input-group mb-3">
+                                    <select asp-for="Rol" required class="form-select form-select-lg br-ip-lemon-green" id="editarRol" disabled aria-label="Seleccionar Rol">
+                                       
+                                        @foreach (var rol in roles)
+                                        {
+                                            @if (rol.Estado != false)
+                                            {
+                                                <option value="@rol.Id">@rol.Nombre</option>
+                                            }
+
+
+                                        }
+                                    </select>
+                                    <button onclick="editarCampo('editarRol')" class="btn btn-lg btn-lemon-green" type="button" id="editarRolBoton"><i class="fa-solid fa-pen"></i></button>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="nis">
+                                    <h5>Correo eléctronico</h5>
+                                </label>
+                                <div class="input-group mb-3">
+                                    <input asp-for="Correo" value="" type="email" class="form-control form-control-lg br-ip-lemon-green" autocomplete="Off" id="editarCorreo" disabled placeholder="Ingresa el correo" />
+                                    <button onclick="editarCampo('editarCorreo')" class="btn btn-lg btn-lemon-green" type="button" id="editarEmailBoton"><i class="fa-solid fa-pen"></i></button>
+                                </div>
+                            </div>
+
+
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Celular">
+                                    <h5>Celular </h5>
+                                </label>
+                               
+
+                                <div class="input-group mb-3">
+                                    <input disabled asp-for="Movil" value="" type="number" class="form-control form-control-lg br-ip-lemon-green" min="1000000000" max="9999999999" autocomplete="Off" id="editarMovil" placeholder="Ingresa el celular" />
+
+                                    <button onclick="editarCampo('editarMovil')" class="btn btn-lg btn-lemon-green" type="button" id="editarAmiBoton"><i class="fa-solid fa-pen"></i></button>
+
+                                </div>
+
+                            </div>
+                        </div>
+
+
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-lg btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn-lg btn btn-lemon-green">Editar</button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="verMasFuncionarioModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="verMasFuncionarioModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content br-forest-green">
+                <div class="modal-header">
+                    <h4 class="modal-title txt-forest-green" id="verMasFuncionarioModalLabel">Información completa del funcionario</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="verMasfuncionarioForm">
+                    <div class="modal-body">
+
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+
+                                <label for="Empresa">
+                                    <h5>Empresa <span class="color-red" >*</span> </h5>
+                                </label>
+
+                                <select class="form-select form-select-lg br-ip-lemon-green w-100" id="verMasEmpresa" disabled aria-label="Seleccionar Empresa">
+                                    <option value=""></option>
+
+                                    <option selected value="0">EPM</option>
+
+                                </select>
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Proyecto">
+                                    <h5>Proyecto <span class="color-red" >*</span> </h5>
+                                </label>
+
+                                <select class="form-select form-select-lg br-ip-lemon-green w-100" id="verMasProyecto" disabled aria-label="Seleccionar Proyecto">
+                                    <option value=""></option>
+
+                                    <option selected value="0">EPM</option>
+
+                                </select>
+                            </div>
+                        </div>
+
+
+
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Codigo">
+                                    <h5>Código <span class="color-red" >*</span> </h5>
+                                </label>
+                                <input asp-for="Codigo" required value="" type="text" disabled class="form-control form-control-lg br-ip-lemon-green w-100" autocomplete="Off" id="verMasCodigo" placeholder="Ingresa el código" />
+
+
+                            </div>
+
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Nombre">
+                                    <h5>Nombre <span class="color-red" >*</span> </h5>
+                                </label>
+                                <input asp-for="Nombre" required value="" type="text" disabled class="form-control form-control-lg br-ip-lemon-green w-100" autocomplete="Off" id="verMasNombre" placeholder="Ingresa el nombre" />
+
+
+                            </div>
+
+
+                        </div>
+
+
+
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Estado">
+                                    <h5>Estado <span class="color-red" >*</span> </h5>
+                                </label>
+
+                                <select asp-for="Estado" required disabled class="form-select form-select-lg br-ip-lemon-green w-100" id="verMasEstado" aria-label="Seleccionar Estado">
+                                    <option value=""></option>
+
+                                    <option value="0">Activo</option>
+                                    <option value="1">Inactivo</option>
+
+
+                                </select>
+                            </div>
+
+
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="rol">
+                                    <h5>Rol <span class="color-red" >*</span> </h5>
+                                </label>
+                                <select asp-for="Rol" required disabled class="form-select form-select-lg br-ip-lemon-green w-100" id="verMasRol" aria-label="Seleccionar Rol">
+                                    <option value=""></option>
+
+                                    @foreach (var rol in roles)
+                                    {
+                                        <option value="@rol.Id">@rol.Nombre</option>
+
+                                    }
+
+
+                                </select>
+
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="nis">
+                                    <h5>Correo eléctronico</h5>
+                                </label>
+                                <input asp-for="Correo" disabled value="" type="email" class="form-control form-control-lg br-ip-lemon-green w-100" autocomplete="Off" id="verMasCorreo" placeholder="Ingresa el correo" />
+
+
+                            </div>
+                            <div class="col-md-12 col-lg-6 col-sm-12">
+                                <label for="Celular">
+                                    <h5>Celular </h5>
+                                </label>
+                                <input asp-for="Movil" disabled value="" type="number" class="form-control form-control-lg br-ip-lemon-green w-100" min="1000000000" max="9999999999" autocomplete="Off" id="verMasMovil" placeholder="Ingresa el celular" />
+
+                            </div>
+                        </div>
+
+
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-lg btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
+                       
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="verInfoCompletaFuncionarioModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"  aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content br-forest-green">
+                <div class="modal-header">
+                    <h4 class="modal-title txt-forest-green" id="crearMedidorModalLabel">Información completa de los funcionarios</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="row justify-content-center">
+
+                        <div class="col-4">
+
+                            <button id="refrescarTablaCompleta" type="button" class="btn-lg btn btn-secondary w-100">Refrescar tabla <i class="fa-solid fa-rotate-right"></i></button>
+
+                        </div>
+
+                    </div>
+                    <table id="tablaFuncionariosCompleto" class="table table-bordered dt-responsive nowrap w-100" cellspacing="0">
+                        <thead class="thead-tea-green">
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+
+
+
+            </div>
+        </div>
+    </div>
+
+
+
+
+    @*  <script src="~/js/fontawesome.js" asp-append-version="true"></script>
+    <script src="~/js/brands.js" asp-append-version="true"></script>
+    <script src="~/js/solid.js" asp-append-version="true"></script>
+    *@
+    @*  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> *@
+    <script src="~/js/jquery-3.6.0.min.js" asp-append-version="true"></script>
+
+    @* <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script> *@
+    <script src="~/js/jquery.dataTables.min.js" asp-append-version="true"></script>
+
+    @* <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script> *@
+    <script src="~/js/dataTables.bootstrap5.min.js" asp-append-version="true"></script>
+
+    <!-- Responsive Extension JS -->
+    @* <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script> *@
+    <script src="~/js/dataTables.responsive.min.js" asp-append-version="true"></script>
+
+    @* <script src="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.jquery.min.js"></script> *@
+    <script src="~/js/chosen.jquery.min.js" asp-append-version="true"></script>
+
+    <script src="~/js/Views/Funcionario/Gestionar.js" asp-append-version="true"></script>
+
+
+
+
+
+    <script>
+
+        var funcionario = @Html.Raw(Json.Serialize(TempData["funcionario"]));
+        var mensajeError = @Html.Raw(Json.Serialize(ViewData["MensajeError"]));
+</script>
+
+
+    
+</body>
+</html>

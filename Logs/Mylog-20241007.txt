@@ -1,0 +1,4 @@
+2024-10-07 09:37:55.638 -05:00 [INF] Intento de logueo con Codigo Cens y con la clave Pru3b4s-C3ns
+2024-10-07 09:37:55.696 -05:00 [INF] Solicitud al api para la generación del token con el body --> {"version":1,"nit":"890904996-1","proyecto":"90","usuario":"Cens","clave":"Pru3b4s-C3ns"}
+2024-10-07 09:38:00.039 -05:00 [INF] Respuesta del api ---> {"codResp":"55999","mensaje":"Error Usuario o clave incorrecto"}
+2024-10-07 09:38:00.044 -05:00 [ERR] Respuesta del api ---> False

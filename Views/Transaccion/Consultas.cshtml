@@ -1,0 +1,326 @@
+﻿@using Newtonsoft.Json
+@using TK_ENERGY_GP_PORTAL.Models.DTO
+@using TK_ENERGY_GP_PORTAL.Models.Utils
+@{
+    ViewData["Title"] = "Gestionar";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@{
+    var funcionarioLoggedIn = Context.Request.HttpContext.Session.GetString("funcionario");
+    var funcionario = JsonConvert.DeserializeObject<UserCredentialsDto>(funcionarioLoggedIn);
+
+    TempData["funcionario"] = funcionario;
+
+}
+
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de Transacciones</title>
+    @*  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> *@
+    <link rel="stylesheet" href="~/css/fontAwesome/css/all.css" asp-append-version="true" />
+
+
+    @*  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"> *@
+    <link rel="stylesheet" href="~/css/bootstrap5.min.css" asp-append-version="true" />
+
+
+    @* <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css"> *@
+    <link rel="stylesheet" href="~/css/dataTables.bootstrap5.min.css" asp-append-version="true" />
+
+
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+
+    @*  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.dataTables.min.css"> *@
+    <link rel="stylesheet" href="~/css/responsive.dataTables.min.css" asp-append-version="true" />
+
+
+
+    @*  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.min.css"> *@
+    <link rel="stylesheet" href="~/css/chosen.min.css" asp-append-version="true" />
+
+
+   
+</head>
+
+<body>
+    <div id="loadingOverlay" class="loader-overlay"></div>
+    <div id="loadingScreen" class="loader"></div>
+    <div class="container">
+
+        <div class="content">
+            <div class="card rounded-0 br-general-card" >
+                <div class="card-body mg-top-20px">
+                    <h2 class="txt-forest-green text-center">Consulta de Transacciones</h2>
+
+                   
+                    <div class="row mg-top-30px" >
+
+
+
+                        <div class="col-lg-6 col-md-12 col-sm-12 mb-2">
+                            <button id="refrescarTabla" type="button" class="btn-lg btn btn-secondary w-100">Refrescar tabla <i class="fa-solid fa-rotate-right"></i></button>
+                        </div>
+
+                        @if (funcionario.Funcionario.Permisos.Find(e => e.Nombre == "VerInfoCompletaTransacciones" && e.Estado == true) != null)
+                        {
+                            <div class="col-lg-6 col-md-12 col-sm-12 mb-2">
+                                <button type="button" onclick="verInfoCompletaTransaccionModal()" class="btn-lg btn btn-lemon-green w-100">Ver información completa <i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>
+                            </div>
+                        }
+
+                        <div class="col-12  mb-2">
+                            <label for="filtro">
+                                <h5>Selecciona los filtros a usar </h5>
+                            </label>
+                            <select id="filtrosTransacciones" class="chosen form-control br-ip-lemon-green" multiple>
+                                <option value="medidor">Medidor</option>
+                                <option value="fechas">Rango de fechas</option>
+
+
+                            </select>
+                        </div>
+
+                    </div>
+
+
+                    <form id="filtrosForm">
+                        <div class="row">
+
+                            <!-- Columna Serial -->
+                            <div id="filtroSerial" class="col-lg-6 col-md-12 mb-3 display-none">
+                                <label for="serial">
+                                    <h5>Serial</h5>
+                                </label>
+                                <input id="serial" name="serial" type="number" required class="form-control form-control-lg br-ip-lemon-green w-100" placeholder="Ingresa el serial">
+                            </div>
+
+                            <!-- Columna Rango de fechas -->
+                            <div id="filtroFechas" class="col-lg-6 col-md-12 mb-3 display-none">
+                                <label for="Rango de fechas">
+                                    <h5>Rango de fechas</h5>
+                                </label>
+                                <div class="input-group">
+                                    <input id="fechaInicial" name="fechaInicial" type="date" required class="form-control form-control-lg br-ip-lemon-green">
+                                    <input id="fechaFinal" name="fechaFinal" type="date" required class="form-control form-control-lg br-ip-lemon-green">
+                                </div>
+                            </div>
+
+                            <!-- Columna Botón de búsqueda -->
+                            <div id="buscarPorFiltro" class="col-lg-6 col-md-12 mb-3 display-none">
+                                <label id="labelBotonFiltro" for="botonfiltro">
+                                    <h5></h5>
+                                </label>
+                                <button type="submit" class="btn-lg btn btn-lemon-green w-100">Buscar <i class="fa-solid fa-filter"></i></button>
+                            </div>
+
+                            <div id="removerFiltros" class="col-lg-12 col-md-12 mb-3 display-none">
+                                <label id="labelRemoverFiltros" for="botonfiltro">
+                                    <h5></h5>
+                                </label>
+                                <button type="button" onclick="removerFiltros()" class="btn-lg btn btn-secondary w-100">Remover filtros <i class="fa-solid fa-filter-circle-xmark"></i></button>
+                            </div>
+
+                        </div>
+                    </form>
+
+                    <div class="col-12">
+
+                        <h5 class="display-none" id="filtrosUsados"></h5>
+
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12">
+                            <table id="tablaTransacciones" class="table table-bordered dt-responsive nowrap w-100" cellspacing="0">
+                                <thead class="thead-tea-green">
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+
+        
+
+        <div class="modal fade" id="verMasTransaccionModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="crearMedidorModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content br-forest-green">
+                    <div class="modal-header">
+                        <h4 class="modal-title txt-forest-green" id="crearMedidorModalLabel">Información completa del medidor</h4>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="transaccionForm" asp-controller="Transaccion" asp-action="crearTransaccion" method="POST">
+                        <div class="modal-body">
+
+                            <div class="row mb-3">
+                                <div class="col-md-12 col-lg-6 col-sm-12">
+                                    <label for="Empresa">
+                                        <h5>Empresa <span class="color-red">*</span> </h5>
+                                    </label>
+                                    <input disabled type="text" class="form-control form-control-lg br-ip-lemon-green" id="verMasEmpresa"  aria-label="Seleccionar Empresa">
+                                </div>
+                                <div class="col-md-12 col-lg-6 col-sm-12">
+                                    <label for="Proyecto">
+                                        <h5>Proyecto <span class="color-red" >*</span> </h5>
+                                    </label>
+                                    <input disabled type="text" class="form-control form-control-lg br-ip-lemon-green" id="verMasProyecto"  aria-label="Seleccionar Proyecto">
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-12 col-lg-6 col-sm-12">
+                                    <label for="Medidor">
+                                        <h5>Medidor <span class="color-red">*</span> </h5>
+                                    </label>
+                                    <input disabled type="text" class="form-control form-control-lg br-ip-lemon-green" id="verMasMedidor" >
+                                </div>
+                                <div class="col-md-12 col-lg-6 col-sm-12">
+                                    <label for="Funcionario">
+                                        <h5>Funcionario <span class="color-red">*</span> </h5>
+                                    </label>
+                                    <input disabled type="text" class="form-control form-control-lg br-ip-lemon-green" id="verMasFuncionario">
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-12 col-lg-6 col-sm-12">
+                                    <label for="TipoToken">
+                                        <h5>Tipo de token <span class="color-red">*</span> </h5>
+                                    </label>
+                                    <input disabled type="text" class="form-control form-control-lg br-ip-lemon-green" id="verMasTipoToken">
+                                </div>
+                                <div class="col-md-12 col-lg-6 col-sm-12">
+                                    <label for="Valor">
+                                        <h5>Valor <span class="color-red">*</span> </h5>
+                                    </label>
+                                    <input disabled type="text" class="form-control form-control-lg br-ip-lemon-green" id="verMasValor">
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-12 col-lg-6 col-sm-12">
+                                    <label for="Descripcion">
+                                        <h5>Descripcion <span class="color-red">*</span> </h5>
+                                    </label>
+                                    <input disabled type="text" class="form-control form-control-lg br-ip-lemon-green" id="verMasDescripcion">
+                                </div>
+                                <div class="col-md-12 col-lg-6 col-sm-12">
+                                    <label for="FechaRespuesta">
+                                        <h5>Fecha de Respuesta <span class="color-red">*</span> </h5>
+                                    </label>
+                                    <input disabled type="text" class="form-control form-control-lg br-ip-lemon-green" id="verMasFechaRespuesta">
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-12 col-lg-6 col-sm-12">
+                                    <label for="Respuesta">
+                                        <h5>Respuesta <span class="color-red">*</span> </h5>
+                                    </label>
+                                    <input disabled type="text" class="form-control form-control-lg br-ip-lemon-green" id="verMasRespuesta">
+                                </div>
+                                <div class="col-md-12 col-lg-6 col-sm-12">
+                                    <label for="Token">
+                                        <h5>Token <span class="color-red">*</span> </h5>
+                                    </label>
+                                    <textarea  disabled type="text" class="form-control form-control-lg br-ip-lemon-green" id="verMasToken"></textarea>
+                                </div>
+                            </div>
+                            
+
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn-lg btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
+
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="modal fade" id="verInfoCompletaTransaccionModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="crearMedidorModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-fullscreen">
+                <div class="modal-content br-forest-green">
+                    <div class="modal-header">
+                        <h4 class="modal-title txt-forest-green" id="crearMedidorModalLabel">Información completa de las transacciones</h4>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <div class="modal-body">
+
+                        <div class="row justify-content-center">
+
+                            <div class="col-4">
+
+                                <button id="refrescarTablaCompleta" type="button" class="btn-lg btn btn-secondary w-100">Refrescar tabla <i class="fa-solid fa-rotate-right"></i></button>
+
+                            </div>
+
+                        </div>
+
+                        <div class="row">
+
+                            <div class="col-12">
+                                <table id="tablaTransaccionesCompleto" class="table table-bordered dt-responsive nowrap w-100" cellspacing="0">
+                                    <thead class="thead-tea-green">
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                        </div>
+                        
+                    </div>
+
+
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+@* 
+    <script src="~/js/fontawesome.js" asp-append-version="true"></script>
+    <script src="~/js/brands.js" asp-append-version="true"></script>
+    <script src="~/js/solid.js" asp-append-version="true"></script> *@
+
+    @*  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> *@
+    <script src="~/js/jquery-3.6.0.min.js" asp-append-version="true"></script>
+
+    @* <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script> *@
+    <script src="~/js/jquery.dataTables.min.js" asp-append-version="true"></script>
+
+    @* <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script> *@
+    <script src="~/js/dataTables.bootstrap5.min.js" asp-append-version="true"></script>
+
+    <!-- Responsive Extension JS -->
+    @* <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script> *@
+    <script src="~/js/dataTables.responsive.min.js" asp-append-version="true"></script>
+
+    @* <script src="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.jquery.min.js"></script> *@
+    <script src="~/js/chosen.jquery.min.js" asp-append-version="true"></script>
+
+    <script src="~/js/Views/Transaccion/Consultas.js" asp-append-version="true"></script>
+
+
+   
+   <script>
+
+        var funcionario = @Html.Raw(Json.Serialize(TempData["funcionario"]));
+        var mensajeError = @Html.Raw(Json.Serialize(ViewData["MensajeError"]));
+</script>
+</body>
+</html>

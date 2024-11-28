@@ -1,4 +1,4 @@
-name: CodeQL Analysis
+ name: CodeQL Analysis
 
 on:
   push:
@@ -20,7 +20,7 @@ jobs:
       - name: Set up CodeQL
         uses: github/codeql-action/init@v2
         with:
-          languages: javascript, CSS, C#, HTML # Ajusta según tu proyecto
+          languages: javascript, css, C#, html # Ajusta según tu proyecto
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
